@@ -1,0 +1,20 @@
+[package]
+name = "mongodb-migrator"
+version = "0.1.0"
+authors = ["Konstantin Matsiushonak <k.matush@yandex.com>"]
+edition = "2018"
+
+[dependencies]
+async-trait = "0.1.42"
+chrono = { version = "0.4.19", features = ["serde"] }
+mongodb = "1.1.1"
+bson = "1.1.0"
+anyhow = "1.0.34"
+serde = "1.0.117"
+serde_derive = "1.0.117"
+
+[dev-dependencies]
+tokio = { version = "0.2", features = ["full"] }
+futures = "0.3.8"
+testcontainers = "0.11.0"
+
