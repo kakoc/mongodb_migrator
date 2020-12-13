@@ -25,7 +25,7 @@ impl Migration for M0 {
         Ok(())
     }
 
-    fn get_name(&self) -> &str {
+    fn git_id(&self) -> &str {
         "M0"
     }
 }
@@ -35,12 +35,12 @@ impl Migration for M1 {
     async fn up(&self, db: Database) -> Result<()> {
         db.collection("users")
             .update_one(bson::doc! {"x": 0}, bson::doc! { "x": 1 }, None)
-            .await;
+            .await?;
 
         Ok(())
     }
 
-    fn get_name(&self) -> &str {
+    fn git_id(&self) -> &str {
         "M1"
     }
 }
@@ -50,12 +50,12 @@ impl Migration for M2 {
     async fn up(&self, db: Database) -> Result<()> {
         db.collection("users")
             .update_one(bson::doc! {"x": 1}, bson::doc! { "x": 2 }, None)
-            .await;
+            .await?;
 
         Ok(())
     }
 
-    fn get_name(&self) -> &str {
+    fn git_id(&self) -> &str {
         "M2"
     }
 }
@@ -66,7 +66,7 @@ impl Migration for M3 {
         Err(anyhow::Error::msg("test error".to_string()))
     }
 
-    fn get_name(&self) -> &str {
+    fn git_id(&self) -> &str {
         "M3"
     }
 }
@@ -85,7 +85,7 @@ async fn migrations_ran_in_particular_order() {
     let migrator = mongodb_migrator::migrator::DefaultMigrator::new()
         .with_conn(db.clone())
         .with_migrations_vec(migrations);
-    migrator.up().await;
+    migrator.up().await.unwrap();
 
     assert!(db
         .collection("users")
@@ -110,20 +110,7 @@ async fn ran_migrations_saved_in_migrations_folder() {
     let migrator = mongodb_migrator::migrator::DefaultMigrator::new()
         .with_conn(db.clone())
         .with_migrations_vec(migrations);
-    migrator.up().await;
-
-    println!(
-        "{:?}",
-        db.collection("migrations")
-            .find(bson::doc! {}, None)
-            .await
-            .unwrap()
-            .collect::<Vec<_>>()
-            .await
-            .into_iter()
-            .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-            .collect::<Vec<MigrationRecord>>()
-    );
+    migrator.up().await.unwrap();
 
     assert_eq!(
         db.collection("migrations")
@@ -133,7 +120,7 @@ async fn ran_migrations_saved_in_migrations_folder() {
             .collect::<Vec<_>>()
             .await
             .len(),
-        migrations_len * 2
+        migrations_len
     );
 }
 
@@ -152,7 +139,7 @@ async fn all_ran_migrations_are_succeeded() {
     let migrator = mongodb_migrator::migrator::DefaultMigrator::new()
         .with_conn(db.clone())
         .with_migrations_vec(migrations);
-    migrator.up().await;
+    migrator.up().await.unwrap();
 
     assert_eq!(
         db.collection("migrations")
@@ -178,7 +165,7 @@ async fn all_ran_migrations_are_succeeded() {
 }
 
 #[tokio::test]
-async fn with_failed_migration() {
+async fn with_failed_migration_should_stop_after_first_fail() {
     let docker = testcontainers::clients::Cli::default();
     let node = docker.run(testcontainers::images::mongo::Mongo::default());
     let host_port = node.get_host_port(27017).unwrap();
@@ -218,7 +205,7 @@ async fn with_failed_migration() {
             })
             .collect::<Vec<MigrationRecord>>()
             .len(),
-        2
+        1
     );
 
     assert_eq!(
@@ -229,13 +216,23 @@ async fn with_failed_migration() {
             .collect::<Vec<_>>()
             .await
             .len(),
-        migrations_len * 2
+        2
     );
 }
 
-// let coll = db.collection("migrations");
+// println!(
+//     "{:?}",
+//     db.collection("migrations")
+//         .find(bson::doc! {}, None)
+//         .await
+//         .unwrap()
+//         .collect::<Vec<_>>()
+//         .await
+//         .into_iter()
+//         .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
+//         .collect::<Vec<MigrationRecord>>()
+// );
 
-// let insert_one_result = coll.insert_one(bson::doc! { "x": 42 }, None).await.unwrap();
 // assert!(!insert_one_result
 //     .inserted_id
 //     .as_object_id()

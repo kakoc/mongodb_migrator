@@ -1,9 +1,13 @@
+//! Describes a migration status
 use serde_derive::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum MigrationStatus {
+    /// Migration which is running now
     InProgress,
+    /// Migration was successfully completed
     Succeeded,
+    /// Migration was completed with an error
     Failed,
 }
 

@@ -1,3 +1,8 @@
+//! [`MigrationRecord`] describes the document which will be stored
+//! in the migrations collection.  
+//! It contains all useful attributes which might be used in order
+//! to understand the current state of a particular migration
+
 use chrono::DateTime;
 use chrono::Utc;
 use serde_derive::{Deserialize, Serialize};
@@ -6,21 +11,21 @@ use crate::migration_status::MigrationStatus;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MigrationRecord {
+    pub _id: String,
     pub start_date: chrono::DateTime<Utc>,
     pub end_date: Option<chrono::DateTime<Utc>>,
     pub status: MigrationStatus,
     pub duration: Option<i64>,
-    pub name: String,
 }
 
 impl MigrationRecord {
     pub fn migration_start(migration_name: String) -> Self {
         MigrationRecord {
+            _id: migration_name.clone(),
             start_date: Utc::now(),
             end_date: None,
             status: MigrationStatus::InProgress,
             duration: None,
-            name: migration_name,
         }
     }
 

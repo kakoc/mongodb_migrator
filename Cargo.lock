@@ -954,6 +954,7 @@ dependencies = [
  "bson",
  "chrono",
  "futures",
+ "log",
  "mongodb",
  "serde",
  "serde_derive",

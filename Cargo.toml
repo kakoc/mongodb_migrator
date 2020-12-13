@@ -12,6 +12,7 @@ bson = "1.1.0"
 anyhow = "1.0.34"
 serde = "1.0.117"
 serde_derive = "1.0.117"
+log = "0.4.11"
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["full"] }

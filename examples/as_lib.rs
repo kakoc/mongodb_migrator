@@ -1,21 +1,17 @@
-[![Build Status](https://travis-ci.com/kakoc/mongodb_migrator.svg?token=x6zhjaVWsFLJA2pDjgQT&branch=main)](https://travis-ci.com/kakoc/mongodb_migrator)
-
-Mongodb migrations management tool.
-
-## How to use
-
-```rust
 use anyhow::Result;
 use async_trait::async_trait;
 use mongodb::Database;
+use testcontainers::Docker;
 
 use mongodb_migrator::migration::Migration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let db = mongodb::Client::with_uri_str("mongodb://localhost:27017")
-        .await?
-        .database("test");
+    let docker = testcontainers::clients::Cli::default();
+    let node = docker.run(testcontainers::images::mongo::Mongo::default());
+    let host_port = node.get_host_port(27017).unwrap();
+    let url = format!("mongodb://localhost:{}/", host_port);
+    let db = mongodb::Client::with_uri_str(&url).await?.database("test");
 
     let migrations: Vec<Box<dyn Migration>> = vec![Box::new(M0 {}), Box::new(M1 {})];
     mongodb_migrator::migrator::DefaultMigrator::new()
@@ -59,4 +55,3 @@ impl Migration for M1 {
         "M1"
     }
 }
-```
