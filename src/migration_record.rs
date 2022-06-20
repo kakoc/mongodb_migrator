@@ -9,10 +9,10 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::migration_status::MigrationStatus;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct MigrationRecord {
     pub _id: String,
-    pub start_date: chrono::DateTime<Utc>,
+    pub start_date: Option<chrono::DateTime<Utc>>,
     pub end_date: Option<chrono::DateTime<Utc>>,
     pub status: MigrationStatus,
     pub duration: Option<i64>,
@@ -22,7 +22,7 @@ impl MigrationRecord {
     pub fn migration_start(migration_name: String) -> Self {
         MigrationRecord {
             _id: migration_name.clone(),
-            start_date: Utc::now(),
+            start_date: Some(Utc::now()),
             end_date: None,
             status: MigrationStatus::InProgress,
             duration: None,
@@ -34,7 +34,7 @@ impl MigrationRecord {
 
         MigrationRecord {
             end_date: Some(end_date),
-            status: MigrationStatus::Succeeded,
+            status: MigrationStatus::Success,
             duration: Some(self.calc_migration_duration(end_date)),
             ..self
         }
@@ -45,13 +45,17 @@ impl MigrationRecord {
 
         MigrationRecord {
             end_date: Some(end_date),
-            status: MigrationStatus::Failed,
+            status: MigrationStatus::Fail,
             duration: Some(self.calc_migration_duration(end_date)),
             ..self
         }
     }
 
     fn calc_migration_duration(&self, end_date: DateTime<Utc>) -> i64 {
-        (end_date.time() - self.start_date.time()).num_milliseconds()
+        if self.start_date.is_none() {
+            0
+        } else {
+            (end_date.time() - self.start_date.unwrap().time()).num_milliseconds()
+        }
     }
 }

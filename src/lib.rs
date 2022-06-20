@@ -44,7 +44,7 @@
 //!         Ok(())
 //!     }
 //!
-//!     fn git_id(&self) -> &str {
+//!     fn get_id(&self) -> &str {
 //!         "M0"
 //!     }
 //! }
@@ -52,19 +52,24 @@
 //! #[async_trait]
 //! impl Migration for M1 {
 //!     async fn up(&self, db: Database) -> Result<()> {
-//!         db.collection("users")
-//!             .update_one(bson::doc! {"x": 0}, bson::doc! { "x": 1 }, None)
+//!         db.collection::<Users>("users")
+//!             .update_one(bson::doc! {"x": 0}, bson::doc! { "$set": {"x": 1} }, None)
 //!             .await?;
 //!
 //!         Ok(())
 //!     }
 //!
-//!     fn git_id(&self) -> &str {
+//!     fn get_id(&self) -> &str {
 //!         "M1"
 //!     }
 //! }
+//!
+//! struct Users {
+//!     name: usize,
+//! }
 //! ```
 
+pub mod error;
 pub mod migration;
 pub mod migration_record;
 pub mod migration_status;

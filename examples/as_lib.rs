@@ -30,13 +30,13 @@ struct M1 {}
 impl Migration for M0 {
     async fn up(&self, db: Database) -> Result<()> {
         db.collection("users")
-            .insert_one(bson::doc! { "x": 0 }, None)
+            .insert_one(bson::doc! { "name": 0 }, None)
             .await?;
 
         Ok(())
     }
 
-    fn git_id(&self) -> &str {
+    fn get_id(&self) -> &str {
         "M0"
     }
 }
@@ -44,14 +44,18 @@ impl Migration for M0 {
 #[async_trait]
 impl Migration for M1 {
     async fn up(&self, db: Database) -> Result<()> {
-        db.collection("users")
-            .update_one(bson::doc! {"x": 0}, bson::doc! { "x": 1 }, None)
+        db.collection::<Users>("users")
+            .update_one(bson::doc! {"name": 0}, bson::doc! { "name": 1 }, None)
             .await?;
 
         Ok(())
     }
 
-    fn git_id(&self) -> &str {
+    fn get_id(&self) -> &str {
         "M1"
     }
+}
+
+struct Users {
+    _name: usize,
 }

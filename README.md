@@ -40,7 +40,7 @@ impl Migration for M0 {
         Ok(())
     }
 
-    fn git_id(&self) -> &str {
+    fn get_id(&self) -> &str {
         "M0"
     }
 }
@@ -55,7 +55,7 @@ impl Migration for M1 {
         Ok(())
     }
 
-    fn git_id(&self) -> &str {
+    fn get_id(&self) -> &str {
         "M1"
     }
 }
