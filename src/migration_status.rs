@@ -10,13 +10,3 @@ pub enum MigrationStatus {
     /// Migration was completed with an error
     Fail,
 }
-
-// impl std::fmt::Display for MigrationStatus {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         match self {
-//             MigrationStatus::InProgress => write!(f, "In Progress"),
-//             MigrationStatus::Success => write!(f, "Success"),
-//             MigrationStatus::Fail => write!(f, "Fail"),
-//         }
-//     }
-// }
