@@ -1,8 +1,14 @@
 [package]
 name = "mongodb-migrator"
 version = "0.1.0"
-authors = ["Konstantin Matsiushonak <k.matush@yandex.com>"]
-edition = "2018"
+authors = ["Konstantin Matsiushonak <k.matushonok@gmail.com"]
+edition = "2021"
+description = "MongoDB migrations management tool"
+readme = "README.md"
+repository = "https://github.com/kakoc/mongodb_migrator"
+license = "MIT OR Apache-2.0"
+categories = ["database interfaces"]
+keywords = ["mongodb"]
 
 [dependencies]
 async-trait = "0.1.42"
