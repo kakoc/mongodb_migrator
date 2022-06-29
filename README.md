@@ -7,6 +7,13 @@
 
 Mongodb migrations management tool.
 
+## Setup
+
+```
+[dependencies]
+mongodb-migrator = "0.1.0"
+```
+
 ## How to use
 
 ```rust
