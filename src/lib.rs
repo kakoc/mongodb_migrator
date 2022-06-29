@@ -9,6 +9,7 @@
 //! use anyhow::Result;
 //! use async_trait::async_trait;
 //! use mongodb::Database;
+//! use serde_derive::{Deserialize, Serialize};
 //! use testcontainers::Docker;
 //!
 //! use mongodb_migrator::migration::Migration;
@@ -19,7 +20,8 @@
 //!     let node = docker.run(testcontainers::images::mongo::Mongo::default());
 //!     let host_port = node.get_host_port(27017).unwrap();
 //!     let url = format!("mongodb://localhost:{}/", host_port);
-//!     let db = mongodb::Client::with_uri_str(&url).await?.database("test");
+//!     let client = mongodb::Client::with_uri_str(url).await.unwrap();
+//!     let db = client.database("test");
 //!
 //!     let migrations: Vec<Box<dyn Migration>> = vec![Box::new(M0 {}), Box::new(M1 {})];
 //!     mongodb_migrator::migrator::DefaultMigrator::new()
@@ -38,7 +40,7 @@
 //! impl Migration for M0 {
 //!     async fn up(&self, db: Database) -> Result<()> {
 //!         db.collection("users")
-//!             .insert_one(bson::doc! { "x": 0 }, None)
+//!             .insert_one(bson::doc! { "name": "Batman" }, None)
 //!             .await?;
 //!
 //!         Ok(())
@@ -53,7 +55,11 @@
 //! impl Migration for M1 {
 //!     async fn up(&self, db: Database) -> Result<()> {
 //!         db.collection::<Users>("users")
-//!             .update_one(bson::doc! {"x": 0}, bson::doc! { "$set": {"x": 1} }, None)
+//!             .update_one(
+//!                 bson::doc! { "name": "Batman" },
+//!                 bson::doc! { "$set": { "name": "Superman" } },
+//!                 None,
+//!             )
 //!             .await?;
 //!
 //!         Ok(())
@@ -64,8 +70,9 @@
 //!     }
 //! }
 //!
+//! #[derive(Serialize, Deserialize)]
 //! struct Users {
-//!     name: usize,
+//!     name: String,
 //! }
 //! ```
 

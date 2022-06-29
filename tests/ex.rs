@@ -1,14 +1,3 @@
-[<img alt="github" src="https://img.shields.io/badge/github-kakoc/mongodb_migrator?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/kakoc/mongodb_migrator)
-[<img alt="build status" src="https://img.shields.io/travis/com/kakoc/mongodb_migrator?style=for-the-badge" height="20">](https://travis-ci.com/kakoc/mongodb_migrator)
-
-
-<!-- [![Build Status](https://travis-ci.com/kakoc/mongodb_migrator.svg?token=x6zhjaVWsFLJA2pDjgQT&branch=main)](https://travis-ci.com/kakoc/mongodb_migrator) -->
-
-Mongodb migrations management tool.
-
-## How to use
-
-```rust
 use anyhow::Result;
 use async_trait::async_trait;
 use mongodb::Database;
@@ -17,8 +6,8 @@ use testcontainers::Docker;
 
 use mongodb_migrator::migration::Migration;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+#[tokio::test]
+async fn ex() {
     let docker = testcontainers::clients::Cli::default();
     let node = docker.run(testcontainers::images::mongo::Mongo::default());
     let host_port = node.get_host_port(27017).unwrap();
@@ -34,7 +23,12 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
 
-    Ok(())
+    assert!(db
+        .collection::<Users>("users")
+        .find_one(bson::doc! {"name": "Superman"}, None)
+        .await
+        .unwrap()
+        .is_some());
 }
 
 struct M0 {}
@@ -78,4 +72,3 @@ impl Migration for M1 {
 struct Users {
     name: String,
 }
-```
