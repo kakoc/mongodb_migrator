@@ -39,8 +39,7 @@ async fn main() -> Result<()> {
         .with_conn(db.clone())
         .with_migrations_vec(migrations)
         .up()
-        .await
-        .unwrap();
+        .await?;
 
     Ok(())
 }
