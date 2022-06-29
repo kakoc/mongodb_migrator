@@ -1,4 +1,8 @@
-[![Build Status](https://travis-ci.com/kakoc/mongodb_migrator.svg?token=x6zhjaVWsFLJA2pDjgQT&branch=main)](https://travis-ci.com/kakoc/mongodb_migrator)
+[<img alt="github" src="https://img.shields.io/badge/github-kakoc/mongodb_migrator?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/kakoc/mongodb_migrator)
+[<img alt="build status" src="https://img.shields.io/travis/com/kakoc/mongodb_migrator?style=for-the-badge" height="20">](https://travis-ci.com/kakoc/mongodb_migrator)
+
+
+<!-- [![Build Status](https://travis-ci.com/kakoc/mongodb_migrator.svg?token=x6zhjaVWsFLJA2pDjgQT&branch=main)](https://travis-ci.com/kakoc/mongodb_migrator) -->
 
 Mongodb migrations management tool.
 
