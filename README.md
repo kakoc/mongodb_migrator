@@ -9,9 +9,9 @@ Mongodb migrations management tool.
 
 ## Setup
 
-```
+```toml
 [dependencies]
-mongodb-migrator = "0.1.0"
+mongodb-migrator = "0.1.1"
 ```
 
 ## How to use
