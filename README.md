@@ -94,3 +94,14 @@ struct Users {
     name: String,
 }
 ```
+
+## Roadmap
+
+- [x] Rust based migrations
+- [x] JavaScript based migrations
+- [ ] Rollbacks
+- [ ] cli tool
+- [ ] RESTful service
+
+
+
