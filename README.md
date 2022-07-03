@@ -14,8 +14,16 @@ Mongodb migrations management tool.
 mongodb-migrator = "0.1.1"
 ```
 
+## Functionality
+- [Execute Rust based migrations][1]
+- [Execute JavaScript based migrations][2]
+
+[1]: https://github.com/kakoc/mongodb_migrator/blob/main/examples/as_lib.rs
+[2]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/shell.rs
+
 ## How to use
 
+### Rust based migrations
 ```rust
 use anyhow::Result;
 use async_trait::async_trait;

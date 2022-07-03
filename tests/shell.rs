@@ -40,11 +40,10 @@ pub struct M1 {}
 #[async_trait]
 impl Migration for M0 {
     async fn up(&self, env: Env) -> Result<()> {
-        let r = env.shell.expect("shell is available").execute(
+        env.shell.expect("shell is available").execute(
             "test",
             "db.getCollection('users').insertOne({name: 'Batman'});",
         )?;
-        dbg!(r);
 
         Ok(())
     }
@@ -57,11 +56,10 @@ impl Migration for M0 {
 #[async_trait]
 impl Migration for M1 {
     async fn up(&self, env: Env) -> Result<()> {
-        let r = env.shell.expect("shell is available").execute(
+        env.shell.expect("shell is available").execute(
             "test",
             "db.getCollection('users').updateOne({name: 'Batman'}, {$set: {name: 'Superman'}});",
         )?;
-        dbg!(r);
 
         Ok(())
     }
