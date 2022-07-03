@@ -6,7 +6,7 @@ use testcontainers::Docker;
 use mongodb_migrator::{migration::Migration, migrator::Env};
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     let docker = testcontainers::clients::Cli::default();
     let node = docker.run(testcontainers::images::mongo::Mongo::default());
     let host_port = node.get_host_port(27017).unwrap();
@@ -19,9 +19,8 @@ async fn main() -> Result<()> {
         .with_conn(db.clone())
         .with_migrations_vec(migrations)
         .up()
-        .await?;
-
-    Ok(())
+        .await
+        .unwrap();
 }
 
 struct M0 {}

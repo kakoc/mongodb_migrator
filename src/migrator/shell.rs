@@ -25,8 +25,8 @@ pub struct Shell {
 impl Shell {
     pub fn execute<S: AsRef<str>>(&self, db_name: S, query: S) -> Result<Value> {
         let out = Command::new("mongo")
-            // .arg("--host")
-            // .arg(config.host)
+            .arg("--host")
+            .arg(&self.config.host)
             .arg("--port")
             .arg(self.config.port.to_string())
             .arg("--eval")
