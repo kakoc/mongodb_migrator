@@ -1,55 +1,19 @@
-//! Migrator runs passed migrations - entities which implement [`Migration`] trait
-use anyhow::Result;
 use bson::Bson;
-use futures::stream::StreamExt;
+use futures::StreamExt;
 use mongodb::options::UpdateOptions;
 
-use crate::error::MigrationExecution;
-use crate::migration::Migration;
-use crate::migration_record::MigrationRecord;
-use crate::migration_status::MigrationStatus;
-
-pub struct DefaultMigrator {}
-
-pub struct WithConnection {
-    pub db: mongodb::Database,
-}
-
-pub struct WithMigrationsVec {
-    pub migrations: Vec<String>,
-}
+use super::{
+    shell::Shell, with_connection::WithConnection, with_shell_config::WithShellConfig, Env,
+};
+use crate::{
+    error::MigrationExecution, migration::Migration, migration_record::MigrationRecord,
+    migration_status::MigrationStatus,
+};
 
 pub struct WithConnectionAndMigrationsVec {
+    pub with_shell_config: Option<WithShellConfig>,
     pub with_connection: WithConnection,
     pub migrations: Vec<Box<dyn Migration>>,
-}
-
-pub enum Migrator {
-    DefaultMigrator,
-    WithConnection(WithConnection),
-    WithConnectionAndMigrationsVec,
-}
-
-impl WithConnection {
-    pub fn with_migrations_vec(
-        self,
-        migrations: Vec<Box<dyn Migration>>,
-    ) -> WithConnectionAndMigrationsVec {
-        WithConnectionAndMigrationsVec {
-            migrations,
-            with_connection: self,
-        }
-    }
-}
-
-impl DefaultMigrator {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn with_conn(self, db: mongodb::Database) -> WithConnection {
-        WithConnection { db }
-    }
 }
 
 impl WithConnectionAndMigrationsVec {
@@ -153,9 +117,24 @@ impl WithConnectionAndMigrationsVec {
                     next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
                 })?;
 
+            let shell = if self.with_shell_config.is_some() {
+                Some(Shell {
+                    config: self
+                        .with_shell_config
+                        .clone()
+                        .expect("shell config is present")
+                        .with_shell_config,
+                })
+            } else {
+                None
+            };
             let migration_record = migration
                 .clone()
-                .up(self.with_connection.db.clone())
+                .up(Env {
+                    db: Some(self.with_connection.db.clone()),
+                    shell,
+                    ..Default::default()
+                })
                 .await
                 .map_or_else(
                     |_| migration_record.clone().migration_failed(),
