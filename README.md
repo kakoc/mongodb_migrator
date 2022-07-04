@@ -1,5 +1,5 @@
 [<img alt="github" src="https://img.shields.io/badge/github-kakoc/mongodb_migrator?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/kakoc/mongodb_migrator)
-[<img alt="crates.io" src="https://img.shields.io/crates/v/mongodb-migrator.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/syn)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/mongodb-migrator.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/mongodb-migrator)
 [<img alt="docs.rs" src="https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&labelColor=555555&logoColor=white&logo=docs.rs" height="20">](https://docs.rs/mongodb-migrator/latest/mongodb_migrator)
 [<img alt="build status" src="https://img.shields.io/travis/com/kakoc/mongodb_migrator?style=for-the-badge" height="20">](https://travis-ci.com/kakoc/mongodb_migrator)
 
