@@ -21,7 +21,6 @@ mongodb-migrator = "0.1.2"
 
 ## How to use
 
-### Rust based migrations
 ```rust
 use anyhow::Result;
 use async_trait::async_trait;
