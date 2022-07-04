@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use bson::Bson;
 use futures::StreamExt;
 use mongodb::options::UpdateOptions;
@@ -87,6 +89,8 @@ impl WithMigrationsVec {
     ///   handleIfResultWasntSaved
     ///   returnIfMigrationUpWithFailedResultWithAllNextSavedAsFail
     pub async fn up(&self) -> Result<(), MigrationExecution> {
+        self.validate()?;
+
         // TODO(koc_kakoc): execute only failed or not stored in migrations collections
         let ids = self.get_migrations_ids_to_execute_from_index(0).await;
         for (i, migration) in self
@@ -229,5 +233,29 @@ impl WithMigrationsVec {
         }
 
         Ok(())
+    }
+
+    fn validate(&self) -> Result<(), MigrationExecution> {
+        let mut entries = BTreeMap::new();
+        self.migrations
+            .iter()
+            .enumerate()
+            .for_each(|(index, migration)| {
+                let entry = entries
+                    .entry(migration.get_id().to_string())
+                    .or_insert(vec![]);
+                entry.push(index);
+            });
+
+        let duplicates = entries
+            .into_iter()
+            .filter(|(_id, indices)| indices.len() > 1)
+            .collect::<BTreeMap<String, Vec<usize>>>();
+
+        if duplicates.len() > 0 {
+            Err(MigrationExecution::PassedMigrationsWithDuplicatedIds { duplicates })
+        } else {
+            Ok(())
+        }
     }
 }

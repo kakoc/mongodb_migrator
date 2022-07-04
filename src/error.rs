@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use mongodb::error::Error as MongoDbError;
 use thiserror::Error;
 
@@ -50,5 +52,12 @@ pub enum MigrationExecution {
     FinishedAndSavedAsFail {
         migration_id: String,
         next_not_executed_migrations_ids: Vec<String>,
+    },
+    #[error(
+        "Migrations weren't executed since there are several migrations with duplicated ids(id, indices vec):
+	 {duplicates:?}"
+    )]
+    PassedMigrationsWithDuplicatedIds {
+        duplicates: BTreeMap<String, Vec<usize>>,
     },
 }
