@@ -2,7 +2,6 @@
 pub mod default;
 pub mod shell;
 pub mod with_connection;
-pub mod with_connection_and_migrations_vec;
 pub mod with_migrations_vec;
 pub mod with_shell_config;
 
@@ -10,14 +9,13 @@ use mongodb::Database;
 
 use self::{
     default::DefaultMigrator, shell::Shell, with_connection::WithConnection,
-    with_connection_and_migrations_vec::WithConnectionAndMigrationsVec,
-    with_shell_config::WithShellConfig,
+    with_migrations_vec::WithMigrationsVec, with_shell_config::WithShellConfig,
 };
 
 pub enum Migrator {
     DefaultMigrator(DefaultMigrator),
     WithConnection(WithConnection),
-    WithConnectionAndMigrationsVec(WithConnectionAndMigrationsVec),
+    WithMigrationsVec(WithMigrationsVec),
     WithShellConfig(WithShellConfig),
 }
 

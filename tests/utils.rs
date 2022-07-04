@@ -29,8 +29,7 @@ impl<'a> TestDb<'a> {
 pub fn init_migrator_with_migrations(
     db: Database,
     migrations: Vec<Box<dyn Migration>>,
-) -> mongodb_migrator::migrator::with_connection_and_migrations_vec::WithConnectionAndMigrationsVec
-{
+) -> mongodb_migrator::migrator::with_migrations_vec::WithMigrationsVec {
     mongodb_migrator::migrator::default::DefaultMigrator::new()
         .with_conn(db)
         .with_migrations_vec(migrations)
@@ -41,8 +40,7 @@ pub fn init_shell_migrator_with_migrations(
     db: Database,
     shell_config: ShellConfig,
     migrations: Vec<Box<dyn Migration>>,
-) -> mongodb_migrator::migrator::with_connection_and_migrations_vec::WithConnectionAndMigrationsVec
-{
+) -> mongodb_migrator::migrator::with_migrations_vec::WithMigrationsVec {
     mongodb_migrator::migrator::default::DefaultMigrator::new()
         .with_conn(db)
         .with_shell_config(shell_config)

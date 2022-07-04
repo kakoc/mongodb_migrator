@@ -1,6 +1,5 @@
 use super::{
-    shell::ShellConfig, with_connection_and_migrations_vec::WithConnectionAndMigrationsVec,
-    with_shell_config::WithShellConfig,
+    shell::ShellConfig, with_migrations_vec::WithMigrationsVec, with_shell_config::WithShellConfig,
 };
 use crate::migration::Migration;
 
@@ -10,11 +9,8 @@ pub struct WithConnection {
 }
 
 impl WithConnection {
-    pub fn with_migrations_vec(
-        self,
-        migrations: Vec<Box<dyn Migration>>,
-    ) -> WithConnectionAndMigrationsVec {
-        WithConnectionAndMigrationsVec {
+    pub fn with_migrations_vec(self, migrations: Vec<Box<dyn Migration>>) -> WithMigrationsVec {
+        WithMigrationsVec {
             migrations,
             with_connection: self,
             with_shell_config: None,

@@ -1,8 +1,7 @@
 //! With this type of the migrator it's possible write JavaScript based migrations
 //! and run them via mongo shell(--eval flag)
 use super::{
-    shell::ShellConfig, with_connection::WithConnection,
-    with_connection_and_migrations_vec::WithConnectionAndMigrationsVec,
+    shell::ShellConfig, with_connection::WithConnection, with_migrations_vec::WithMigrationsVec,
 };
 use crate::migration::Migration;
 
@@ -13,11 +12,8 @@ pub struct WithShellConfig {
 }
 
 impl WithShellConfig {
-    pub fn with_migrations_vec(
-        self,
-        migrations: Vec<Box<dyn Migration>>,
-    ) -> WithConnectionAndMigrationsVec {
-        WithConnectionAndMigrationsVec {
+    pub fn with_migrations_vec(self, migrations: Vec<Box<dyn Migration>>) -> WithMigrationsVec {
+        WithMigrationsVec {
             migrations,
             // TODO(kakoc): rework forwarding: merge? split? -clone?
             with_shell_config: Some(self.clone()),
