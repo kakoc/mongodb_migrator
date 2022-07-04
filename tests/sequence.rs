@@ -9,7 +9,7 @@ use mongodb_migrator::{
 mod utils;
 use utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2};
 
-/// M0 -> M1 -> M2
+// M0 -> M1 -> M2
 #[tokio::test]
 async fn migrations_executed_in_specified_order() {
     let docker = testcontainers::clients::Cli::default();

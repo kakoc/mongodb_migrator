@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
-use bson::Bson;
+use bson::{Bson, Document};
 use futures::StreamExt;
-use mongodb::options::UpdateOptions;
+use mongodb::{options::UpdateOptions, results::InsertOneResult};
 
 use super::{
     shell::Shell, with_connection::WithConnection, with_shell_config::WithShellConfig, Env,
@@ -99,92 +99,7 @@ impl WithMigrationsVec {
             .filter(|m| ids.contains(&m.get_id().to_string()))
             .enumerate()
         {
-            let migration_record = MigrationRecord::migration_start(migration.get_id().to_string());
-            let serialized_to_document_migration_record = bson::to_document(&migration_record)
-                .map_err(|error| MigrationExecution::InitialMigrationRecord {
-                    migration_id: migration.get_id().to_string(),
-                    migration_record: migration_record.clone(),
-                    next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
-                    additional_info: error,
-                })?;
-
-            let res = self
-                .with_connection
-                .db
-                .clone()
-                .collection("migrations")
-                .insert_one(serialized_to_document_migration_record, None)
-                .await
-                .map_err(|error| MigrationExecution::InProgressStatusNotSaved {
-                    migration_id: migration.get_id().to_string(),
-                    additional_info: error,
-                    next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
-                })?;
-
-            let shell = if self.with_shell_config.is_some() {
-                Some(Shell {
-                    config: self
-                        .with_shell_config
-                        .clone()
-                        .expect("shell config is present")
-                        .with_shell_config,
-                })
-            } else {
-                None
-            };
-            let migration_record = migration
-                .clone()
-                .up(Env {
-                    db: Some(self.with_connection.db.clone()),
-                    shell,
-                    ..Default::default()
-                })
-                .await
-                .map_or_else(
-                    |_| migration_record.clone().migration_failed(),
-                    |_| migration_record.clone().migration_succeeded(),
-                );
-
-            let serialized_to_document_migration_record = bson::to_document(&migration_record)
-                .map_err(
-                    |error| MigrationExecution::FinishedButNotSavedDueToSerialization {
-                        migration_id: migration.get_id().to_string(),
-                        migration_status: format!("{:?}", &migration_record.status),
-                        migration_record: migration_record.clone(),
-                        next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
-                        additional_info: error,
-                    },
-                )?;
-
-            let mut u_o: UpdateOptions = Default::default();
-            u_o.upsert = Some(true);
-
-            self.with_connection
-                .db
-                .clone()
-                .collection::<MigrationRecord>("migrations")
-                .update_one(
-                    bson::doc! {"_id": res.inserted_id},
-                    bson::doc! {"$set": serialized_to_document_migration_record},
-                    u_o,
-                )
-                .await
-                .map_err(
-                    |error| MigrationExecution::FinishedButNotSavedDueMongoError {
-                        migration_id: migration.get_id().to_string(),
-                        migration_status: format!("{:?}", &migration_record.status),
-                        additional_info: error,
-                        next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
-                    },
-                )?;
-
-            if migration_record.status == MigrationStatus::Fail {
-                self.save_not_executed_migrations(i + 1).await?;
-                return Err(MigrationExecution::FinishedAndSavedAsFail {
-                    migration_id: migration.get_id().to_string(),
-                    next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
-                });
-            }
+            self.try_run_migration(migration, i).await?;
         }
 
         Ok(())
@@ -235,6 +150,23 @@ impl WithMigrationsVec {
         Ok(())
     }
 
+    pub async fn up_single_from_vec(&self, migration_id: String) -> Result<(), MigrationExecution> {
+        self.validate()?;
+
+        let migration = self
+            .migrations
+            .iter()
+            .enumerate()
+            .find(|(_index, migration)| migration.get_id().to_string() == migration_id);
+
+        if migration.is_some() {
+            let (index, migration) = migration.unwrap();
+            self.try_run_migration(migration, index).await
+        } else {
+            Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
+        }
+    }
+
     fn validate(&self) -> Result<(), MigrationExecution> {
         let mut entries = BTreeMap::new();
         self.migrations
@@ -257,5 +189,160 @@ impl WithMigrationsVec {
         } else {
             Ok(())
         }
+    }
+
+    fn prepare_initial_migration_record(
+        &self,
+        migration: &Box<dyn Migration>,
+        i: usize,
+    ) -> Result<(Document, MigrationRecord), MigrationExecution> {
+        let migration_record = MigrationRecord::migration_start(migration.get_id().to_string());
+
+        Ok((
+            bson::to_document(&migration_record).map_err(|error| {
+                MigrationExecution::InitialMigrationRecord {
+                    migration_id: migration.get_id().to_string(),
+                    migration_record: migration_record.clone(),
+                    next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
+                    additional_info: error,
+                }
+            })?,
+            migration_record,
+        ))
+    }
+
+    async fn save_initial_migration_record(
+        &self,
+        migration: &Box<dyn Migration>,
+        serialized_to_document_migration_record: Document,
+        i: usize,
+    ) -> Result<InsertOneResult, MigrationExecution> {
+        Ok(self
+            .with_connection
+            .db
+            .clone()
+            .collection("migrations")
+            .insert_one(serialized_to_document_migration_record, None)
+            .await
+            .map_err(|error| MigrationExecution::InProgressStatusNotSaved {
+                migration_id: migration.get_id().to_string(),
+                additional_info: error,
+                next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
+            })?)
+    }
+
+    async fn save_executed_migration_record(
+        &self,
+        migration: &Box<dyn Migration>,
+        migration_record: &MigrationRecord,
+        serialized_to_document_migration_record: Document,
+        res: InsertOneResult,
+        i: usize,
+    ) -> Result<(), MigrationExecution> {
+        let mut u_o: UpdateOptions = Default::default();
+        u_o.upsert = Some(true);
+
+        self.with_connection
+            .db
+            .clone()
+            .collection::<MigrationRecord>("migrations")
+            .update_one(
+                bson::doc! {"_id": res.inserted_id},
+                bson::doc! {"$set": serialized_to_document_migration_record},
+                u_o,
+            )
+            .await
+            .map_err(
+                |error| MigrationExecution::FinishedButNotSavedDueMongoError {
+                    migration_id: migration.get_id().to_string(),
+                    migration_status: format!("{:?}", &migration_record.status),
+                    additional_info: error,
+                    next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
+                },
+            )?;
+
+        Ok(())
+    }
+
+    fn try_get_mongo_shell(&self) -> Option<Shell> {
+        if self.with_shell_config.is_some() {
+            Some(Shell {
+                config: self
+                    .with_shell_config
+                    .clone()
+                    .expect("shell config is present")
+                    .with_shell_config,
+            })
+        } else {
+            None
+        }
+    }
+
+    async fn run_migration(
+        &self,
+        migration: &Box<dyn Migration>,
+        shell: Option<Shell>,
+        migration_record: &MigrationRecord,
+    ) -> MigrationRecord {
+        migration
+            .clone()
+            .up(Env {
+                db: Some(self.with_connection.db.clone()),
+                shell,
+                ..Default::default()
+            })
+            .await
+            .map_or_else(
+                |_| migration_record.clone().migration_failed(),
+                |_| migration_record.clone().migration_succeeded(),
+            )
+    }
+
+    async fn try_run_migration(
+        &self,
+        migration: &Box<dyn Migration>,
+        i: usize,
+    ) -> Result<(), MigrationExecution> {
+        let (serialized_to_document_migration_record, migration_record) =
+            self.prepare_initial_migration_record(migration, i)?;
+
+        let res = self
+            .save_initial_migration_record(migration, serialized_to_document_migration_record, i)
+            .await?;
+
+        let shell = self.try_get_mongo_shell();
+        let migration_record = self
+            .run_migration(migration, shell, &migration_record)
+            .await;
+
+        let serialized_to_document_migration_record = bson::to_document(&migration_record)
+            .map_err(
+                |error| MigrationExecution::FinishedButNotSavedDueToSerialization {
+                    migration_id: migration.get_id().to_string(),
+                    migration_status: format!("{:?}", &migration_record.status),
+                    migration_record: migration_record.clone(),
+                    next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
+                    additional_info: error,
+                },
+            )?;
+
+        self.save_executed_migration_record(
+            migration,
+            &migration_record,
+            serialized_to_document_migration_record,
+            res,
+            i,
+        )
+        .await?;
+
+        if migration_record.status == MigrationStatus::Fail {
+            self.save_not_executed_migrations(i + 1).await?;
+            return Err(MigrationExecution::FinishedAndSavedAsFail {
+                migration_id: migration.get_id().to_string(),
+                next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
+            });
+        }
+
+        Ok(())
     }
 }

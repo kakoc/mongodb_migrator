@@ -60,4 +60,6 @@ pub enum MigrationExecution {
     PassedMigrationsWithDuplicatedIds {
         duplicates: BTreeMap<String, Vec<usize>>,
     },
+    #[error("Single migration for execution wasn't found in migrations vec: {migration_id:?}")]
+    MigrationFromVecNotFound { migration_id: String },
 }
