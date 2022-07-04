@@ -103,6 +103,9 @@ struct Users {
 - [ ] Rollbacks
 - [ ] Cli tool
 - [ ] RESTful service
+- [ ] Stragegies
+	- [ ] Fail first
+	- [ ] Try all
 
 
 
