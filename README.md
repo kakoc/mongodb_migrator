@@ -100,7 +100,7 @@ struct Users {
 - [ ] Rollbacks
 - [ ] Cli tool
 - [ ] RESTful service
-- [ ] as npm package
+- [ ] As npm package
 - [ ] Stragegies
 	- [ ] Fail first
 	- [ ] Try all
