@@ -64,6 +64,12 @@ impl Migration for M0 {
         Ok(())
     }
 
+    async fn down(&self, env: Env) -> Result<()> {
+        M2 {}.up(env).await?;
+
+        Ok(())
+    }
+
     fn get_id(&self) -> &str {
         "M0"
     }
@@ -86,6 +92,12 @@ impl Migration for M1 {
         Ok(())
     }
 
+    async fn down(&self, env: Env) -> Result<()> {
+        M1 {}.up(env).await?;
+
+        Ok(())
+    }
+
     fn get_id(&self) -> &str {
         "M1"
     }
@@ -99,6 +111,12 @@ impl Migration for M2 {
             .collection::<Users>("users")
             .update_one(bson::doc! {"x": 1}, bson::doc! {"$set": {"x": 2} }, None)
             .await?;
+
+        Ok(())
+    }
+
+    async fn down(&self, env: Env) -> Result<()> {
+        M0 {}.up(env).await?;
 
         Ok(())
     }

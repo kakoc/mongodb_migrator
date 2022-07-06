@@ -30,10 +30,12 @@ async fn run_all_tests() {
     run_test!(sequence::migrations_executed_in_specified_order(&t).await);
     run_test!(sequence::all_migrations_have_success_status(&t).await);
     run_test!(sequence::migrations_not_just_saved_as_executed_but_really_affected_target(&t).await);
+    run_test!(sequence::down_migrations_executed_in_specified_order(&t).await);
 
     run_test!(shell::shell(&t).await);
 
     run_test!(single_run_migrations::migrations_executed_in_single_manner(&t).await);
+    run_test!(single_run_migrations::down_migrations_executed_in_single_manner(&t).await);
 
     run_test!(validate::validation_fails_when_passed_with_duplicates(&t).await);
     run_test!(validate::validation_passes_since_all_unique(&t).await);

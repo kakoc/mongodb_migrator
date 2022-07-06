@@ -84,3 +84,39 @@ pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a
         .unwrap()
         .is_some());
 }
+
+// M2 -> M1 -> M0
+// TODO(kakoc) : move all down to a separate folder?
+pub async fn down_migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
+    let migrations: Vec<Box<dyn Migration>> =
+        vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
+    let migrations_ids = migrations
+        .iter()
+        .map(|m| m.get_id().to_string())
+        .collect::<Vec<String>>();
+
+    init_migrator_with_migrations(t.db.clone(), migrations)
+        .down()
+        .await
+        .unwrap();
+
+    let mut f_o: FindOptions = Default::default();
+    f_o.sort = Some(bson::doc! {"end_date": 1});
+
+    let all_records =
+        t.db.collection("migrations")
+            .find(bson::doc! {}, f_o)
+            .await
+            .unwrap()
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
+            .map(|v: MigrationRecord| v._id.to_string())
+            .collect::<Vec<String>>();
+
+    assert_eq!(
+        all_records,
+        migrations_ids.into_iter().rev().collect::<Vec<String>>()
+    );
+}

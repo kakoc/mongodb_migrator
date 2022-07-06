@@ -99,7 +99,26 @@ impl WithMigrationsVec {
             .filter(|m| ids.contains(&m.get_id().to_string()))
             .enumerate()
         {
-            self.try_run_migration(migration, i).await?;
+            self.try_run_migration(migration, i, OperationType::Up)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn down(&self) -> Result<(), MigrationExecution> {
+        self.validate()?;
+
+        let ids = self.get_migrations_ids_to_execute_from_index(0).await;
+        for (i, migration) in self
+            .migrations
+            .iter()
+            .rev()
+            .filter(|m| ids.contains(&m.get_id().to_string()))
+            .enumerate()
+        {
+            self.try_run_migration(migration, i, OperationType::Down)
+                .await?;
         }
 
         Ok(())
@@ -150,6 +169,7 @@ impl WithMigrationsVec {
         Ok(())
     }
 
+    /// Tries to up a migration from the passed before vec
     pub async fn up_single_from_vec(&self, migration_id: String) -> Result<(), MigrationExecution> {
         self.validate()?;
 
@@ -161,7 +181,30 @@ impl WithMigrationsVec {
 
         if migration.is_some() {
             let (index, migration) = migration.unwrap();
-            self.try_run_migration(migration, index).await
+            self.try_run_migration(migration, index, OperationType::Up)
+                .await
+        } else {
+            Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
+        }
+    }
+
+    /// Tries do rollback a migration from the bassed before vec
+    pub async fn down_single_from_vec(
+        &self,
+        migration_id: String,
+    ) -> Result<(), MigrationExecution> {
+        self.validate()?;
+
+        let migration = self
+            .migrations
+            .iter()
+            .enumerate()
+            .find(|(_index, migration)| migration.get_id().to_string() == migration_id);
+
+        if migration.is_some() {
+            let (index, migration) = migration.unwrap();
+            self.try_run_migration(migration, index, OperationType::Down)
+                .await
         } else {
             Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
         }
@@ -278,7 +321,7 @@ impl WithMigrationsVec {
         }
     }
 
-    async fn run_migration(
+    async fn up_migration(
         &self,
         migration: &Box<dyn Migration>,
         shell: Option<Shell>,
@@ -298,10 +341,31 @@ impl WithMigrationsVec {
             )
     }
 
+    async fn down_migration(
+        &self,
+        migration: &Box<dyn Migration>,
+        shell: Option<Shell>,
+        migration_record: &MigrationRecord,
+    ) -> MigrationRecord {
+        migration
+            .clone()
+            .down(Env {
+                db: Some(self.with_connection.db.clone()),
+                shell,
+                ..Default::default()
+            })
+            .await
+            .map_or_else(
+                |_| migration_record.clone().migration_failed(),
+                |_| migration_record.clone().migration_succeeded(),
+            )
+    }
+
     async fn try_run_migration(
         &self,
         migration: &Box<dyn Migration>,
         i: usize,
+        operation_type: OperationType,
     ) -> Result<(), MigrationExecution> {
         let (serialized_to_document_migration_record, migration_record) =
             self.prepare_initial_migration_record(migration, i)?;
@@ -311,9 +375,14 @@ impl WithMigrationsVec {
             .await?;
 
         let shell = self.try_get_mongo_shell();
-        let migration_record = self
-            .run_migration(migration, shell, &migration_record)
-            .await;
+
+        let migration_record = match operation_type {
+            OperationType::Up => self.up_migration(migration, shell, &migration_record).await,
+            OperationType::Down => {
+                self.down_migration(migration, shell, &migration_record)
+                    .await
+            }
+        };
 
         let serialized_to_document_migration_record = bson::to_document(&migration_record)
             .map_err(
@@ -345,4 +414,9 @@ impl WithMigrationsVec {
 
         Ok(())
     }
+}
+
+enum OperationType {
+    Up,
+    Down,
 }
