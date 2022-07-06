@@ -97,7 +97,7 @@ struct Users {
 - [x] Rust based migrations
 - [x] JavaScript based migrations
 - [ ] Logging
-- [ ] Rollbacks
+- [x] Rollbacks
 - [ ] Cli tool
 - [ ] RESTful service
 - [ ] As npm package
