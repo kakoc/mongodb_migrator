@@ -1,17 +1,12 @@
 //! These tests check how single migration run works
+use super::utils::{init_migrator_with_migrations, TestDb, M0, M1, M2};
 use bson::Bson;
 use futures::stream::StreamExt;
 use mongodb::options::FindOptions;
 use mongodb_migrator::{migration::Migration, migration_record::MigrationRecord};
-mod utils;
-use utils::{init_migrator_with_migrations, TestDb, M0, M1, M2};
 
 // M0 -> M1 -> M2
-#[tokio::test]
-async fn migrations_executed_in_single_manner() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
+pub async fn migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations

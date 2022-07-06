@@ -1,13 +1,8 @@
 //! These tests check whether passed migrations doesn't contain duplicates
+use super::utils::{init_migrator_with_migrations, TestDb, M0, M1, M2};
 use mongodb_migrator::{error::MigrationExecution, migration::Migration};
-mod utils;
-use utils::{init_migrator_with_migrations, TestDb, M0, M1, M2};
 
-#[tokio::test]
-async fn validation_fails_when_passed_with_duplicates() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
+pub async fn validation_fails_when_passed_with_duplicates<'a>(t: &TestDb<'a>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M0 {}), Box::new(M0 {})];
 
@@ -27,11 +22,7 @@ async fn validation_fails_when_passed_with_duplicates() {
     }
 }
 
-#[tokio::test]
-async fn validation_passes_since_all_unique() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
+pub async fn validation_passes_since_all_unique<'a>(t: &TestDb<'a>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
 

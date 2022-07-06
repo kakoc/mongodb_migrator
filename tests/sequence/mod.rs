@@ -6,15 +6,10 @@ use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
 };
 
-mod utils;
-use utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2};
+use super::utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2};
 
 // M0 -> M1 -> M2
-#[tokio::test]
-async fn migrations_executed_in_specified_order() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
+pub async fn migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -46,11 +41,7 @@ async fn migrations_executed_in_specified_order() {
 }
 
 /// M0(Success) , M1(Success) , M2(Success)
-#[tokio::test]
-async fn all_migrations_have_success_status() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
+pub async fn all_migrations_have_success_status<'a>(t: &TestDb<'a>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_len = migrations.len();
@@ -76,11 +67,7 @@ async fn all_migrations_have_success_status() {
     assert!(all_records.iter().all(|v| *v == MigrationStatus::Success));
 }
 
-#[tokio::test]
-async fn migrations_not_just_saved_as_executed_but_really_affected_target() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
+pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a>(t: &TestDb<'a>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
 

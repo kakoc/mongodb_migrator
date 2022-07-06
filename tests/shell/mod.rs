@@ -6,13 +6,9 @@ use mongodb_migrator::{
 };
 use serde_derive::{Deserialize, Serialize};
 
-mod utils;
-use utils::{init_shell_migrator_with_migrations, TestDb};
+use super::utils::{init_shell_migrator_with_migrations, TestDb};
 
-#[tokio::test]
-async fn shell() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
+pub async fn shell<'a>(t: &TestDb<'a>) {
     let host_port = t.node.get_host_port(27017).expect("exposed port exists");
     let shell_config = ShellConfig {
         port: host_port as usize,

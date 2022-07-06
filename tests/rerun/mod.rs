@@ -1,18 +1,22 @@
-//! This tests crate contains tests that check state when a migration failed
+//! This tests crate contains tests that check what will be happened
+//! when there are already executed migrations from the the previous "release"
 use bson::{self, Bson};
 use futures::stream::StreamExt;
 use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
 };
 
-mod utils;
-use utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2, M3};
+use super::utils::{init_migrator_with_migrations, TestDb, M0, M1, M2, M3};
 
-#[tokio::test]
-async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_with_next_not_executed_as_failed(
-) {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
+pub async fn picks_only_failed<'a>(t: &TestDb<'a>) {
+    let migration_record = MigrationRecord::migration_succeeded(MigrationRecord::migration_start(
+        M0 {}.get_id().to_string(),
+    ));
+
+    t.db.collection("migrations")
+        .insert_one(bson::to_document(&migration_record).unwrap(), None)
+        .await
+        .unwrap();
 
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(M0 {}),
@@ -25,26 +29,16 @@ async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_with
         .up()
         .await;
 
-    assert!(t
-        .db
-        .collection::<Users>("users")
-        .find_one(bson::doc! {"x": 0}, None)
-        .await
-        .unwrap()
-        .is_some());
-
-    let v =
+    let saved_migration_before =
         t.db.collection("migrations")
-            .find(bson::doc! {}, None)
+            .find_one(bson::doc! {"_id": M0{}.get_id()}, None)
             .await
             .unwrap()
-            .collect::<Vec<_>>()
-            .await
-            .into_iter()
-            .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-            .collect::<Vec<MigrationRecord>>();
+            .unwrap();
+    let saved_migration_before: MigrationRecord =
+        bson::from_bson(Bson::Document(saved_migration_before)).unwrap();
 
-    dbg!(v);
+    assert_eq!(saved_migration_before, migration_record);
 
     assert_eq!(
         t.db.collection("migrations")

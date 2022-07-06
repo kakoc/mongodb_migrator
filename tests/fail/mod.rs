@@ -1,28 +1,17 @@
-//! This tests crate contains tests that check what will be happened
-//! when there are already executed migrations from the the previous "release"
+//! This tests crate contains tests that check state when a migration failed
 use bson::{self, Bson};
 use futures::stream::StreamExt;
 use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
 };
 
-mod utils;
-use utils::{init_migrator_with_migrations, TestDb, M0, M1, M2, M3};
+use super::utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2, M3};
 
-#[tokio::test]
-async fn picks_only_failed() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
-
-    let migration_record = MigrationRecord::migration_succeeded(MigrationRecord::migration_start(
-        M0 {}.get_id().to_string(),
-    ));
-
-    t.db.collection("migrations")
-        .insert_one(bson::to_document(&migration_record).unwrap(), None)
-        .await
-        .unwrap();
-
+pub async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_with_next_not_executed_as_failed<
+    'a,
+>(
+    t: &TestDb<'a>,
+) {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(M0 {}),
         Box::new(M3 {}),
@@ -34,16 +23,13 @@ async fn picks_only_failed() {
         .up()
         .await;
 
-    let saved_migration_before =
-        t.db.collection("migrations")
-            .find_one(bson::doc! {"_id": M0{}.get_id()}, None)
-            .await
-            .unwrap()
-            .unwrap();
-    let saved_migration_before: MigrationRecord =
-        bson::from_bson(Bson::Document(saved_migration_before)).unwrap();
-
-    assert_eq!(saved_migration_before, migration_record);
+    assert!(t
+        .db
+        .collection::<Users>("users")
+        .find_one(bson::doc! {"x": 0}, None)
+        .await
+        .unwrap()
+        .is_some());
 
     assert_eq!(
         t.db.collection("migrations")
