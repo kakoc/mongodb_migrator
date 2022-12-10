@@ -17,5 +17,9 @@ pub trait Migration: Sync {
     }
 
     /// A status about a migration will be stored in a db collection with the following document id
-    fn get_id(&self) -> &str;
+    /// We can pass an id manually otherwise it will be based on the type name so that uniqueness per project
+    /// is guaranteed out of the box
+    fn get_id(&self) -> &str {
+        std::any::type_name::<Self>()
+    }
 }

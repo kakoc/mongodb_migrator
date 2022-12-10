@@ -9,7 +9,7 @@ Mongodb migrations management tool.
 
 ```toml
 [dependencies]
-mongodb-migrator = "0.1.4"
+mongodb-migrator = "0.1.5"
 ```
 
 ## Functionality
@@ -61,10 +61,6 @@ impl Migration for M0 {
 
         Ok(())
     }
-
-    fn get_id(&self) -> &str {
-        "M0"
-    }
 }
 
 #[async_trait]
@@ -79,10 +75,6 @@ impl Migration for M1 {
             .await?;
 
         Ok(())
-    }
-
-    fn get_id(&self) -> &str {
-        "M1"
     }
 }
 
