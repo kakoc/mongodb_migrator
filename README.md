@@ -91,6 +91,7 @@ struct Users {
 - [ ] Logging
 - [x] Rollbacks
 - [ ] Cli tool
+- [ ] UI dashboard
 - [ ] RESTful service
 - [ ] As npm package
 - [ ] Stragegies
