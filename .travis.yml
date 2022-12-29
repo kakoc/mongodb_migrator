@@ -1,4 +1,5 @@
 language: rust
+services: mongodb
 rust:
   - stable
   - beta
