@@ -23,11 +23,14 @@ log = "0.4.11"
 thiserror = "1.0.31"
 futures = "0.3.8"
 
-[dev-dependencies]
+# TODO(kakoc): place under features?
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+axum = "0.6.1"
 tokio = { version = "1.17.0", features = ["full"] }
+
+[dev-dependencies]
 testcontainers = "0.11.0"
 rusty-hook = "^0.11.2"
 version-sync = "0.9"
-
-
-
+hyper = { version = "0.14.23", features = ["client"] }

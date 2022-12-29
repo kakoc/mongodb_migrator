@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crate::migrator::Env;
 
 #[async_trait]
-pub trait Migration: Sync {
+pub trait Migration: Sync + Send {
     /// Runs a migration.
     async fn up(&self, env: Env) -> Result<()>;
 

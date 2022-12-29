@@ -5,7 +5,6 @@ mod fail;
 mod migration_trait;
 mod rerun;
 mod sequence;
-mod server;
 mod shell;
 mod single_run_migrations;
 mod utils;
