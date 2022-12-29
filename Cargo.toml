@@ -1,6 +1,6 @@
 [package]
 name = "mongodb-migrator"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Konstantin Matsiushonak <k.matushonok@gmail.com"]
 edition = "2021"
 description = "MongoDB migrations management tool"

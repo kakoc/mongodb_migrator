@@ -9,15 +9,17 @@ Mongodb migrations management tool.
 
 ```toml
 [dependencies]
-mongodb-migrator = "0.1.5"
+mongodb-migrator = "0.1.6"
 ```
 
 ## Functionality
 - [Execute Rust based migrations][1]
 - [Execute JavaScript based migrations][2]
+- [Run as RESTful service][3]
 
 [1]: https://github.com/kakoc/mongodb_migrator/blob/main/examples/as_lib.rs
 [2]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/shell.rs
+[3]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/server/mod.rs
 
 ## How to use
 
@@ -92,7 +94,7 @@ struct Users {
 - [x] Rollbacks
 - [ ] Cli tool
 - [ ] UI dashboard
-- [ ] RESTful service
+- [x] RESTful service
 - [ ] As npm package
 - [ ] Stragegies
 	- [ ] Fail first
