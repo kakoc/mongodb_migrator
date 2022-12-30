@@ -1,5 +1,5 @@
 language: rust
-services: mongodb
+services: []
 rust:
   - stable
   - beta
@@ -9,4 +9,3 @@ jobs:
     - rust: nightly
   fast_finish: true
   cache: cargo
-

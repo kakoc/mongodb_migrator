@@ -24,7 +24,17 @@ pub struct Shell {
 
 impl Shell {
     pub fn execute<S: AsRef<str> + std::fmt::Debug>(&self, db_name: S, query: S) -> Result<Value> {
-        let out = Command::new("mongosh")
+        let mongo = { Command::new("mongo").spawn() };
+        let mongo_sh = { Command::new("mongosh").spawn() };
+        let command = if mongo_sh.is_ok() {
+            "mongosh"
+        } else if mongo.is_ok() {
+            "mongo"
+        } else {
+            panic!("mongo[sh] is not installed");
+        };
+
+        let out = Command::new(command)
             .arg("--host")
             .arg(&self.config.host)
             .arg("--port")
