@@ -93,14 +93,23 @@ impl WithMigrationsVec {
 
         // TODO(koc_kakoc): execute only failed or not stored in migrations collections
         let ids = self.get_migrations_ids_to_execute_from_index(0).await;
+        tracing::info!(
+            message = "the following migrations are going to be executed",
+            ids = format!("{:?}", ids),
+            op = format!("{:?}", OperationType::Up)
+        );
         for (i, migration) in self
             .migrations
             .iter()
             .filter(|m| ids.contains(&m.get_id().to_string()))
             .enumerate()
         {
-            self.try_run_migration(migration, i, OperationType::Up)
-                .await?;
+            let r = self
+                .try_run_migration(migration, i, OperationType::Up)
+                .await;
+            self.trace_result(&migration, &r, OperationType::Up);
+
+            r?
         }
 
         Ok(())
@@ -110,6 +119,11 @@ impl WithMigrationsVec {
         self.validate()?;
 
         let ids = self.get_migrations_ids_to_execute_from_index(0).await;
+        tracing::info!(
+            message = "the following migrations are going to be executed",
+            ids = format!("{:?}", ids),
+            op = format!("{:?}", OperationType::Down)
+        );
         for (i, migration) in self
             .migrations
             .iter()
@@ -117,8 +131,12 @@ impl WithMigrationsVec {
             .filter(|m| ids.contains(&m.get_id().to_string()))
             .enumerate()
         {
-            self.try_run_migration(migration, i, OperationType::Down)
-                .await?;
+            let r = self
+                .try_run_migration(migration, i, OperationType::Down)
+                .await;
+            self.trace_result(&migration, &r, OperationType::Down);
+
+            r?
         }
 
         Ok(())
@@ -181,8 +199,12 @@ impl WithMigrationsVec {
 
         if migration.is_some() {
             let (index, migration) = migration.unwrap();
-            self.try_run_migration(migration, index, OperationType::Up)
-                .await
+            let r = self
+                .try_run_migration(migration, index, OperationType::Up)
+                .await;
+            self.trace_result(&migration, &r, OperationType::Up);
+
+            r
         } else {
             Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
         }
@@ -203,8 +225,12 @@ impl WithMigrationsVec {
 
         if migration.is_some() {
             let (index, migration) = migration.unwrap();
-            self.try_run_migration(migration, index, OperationType::Down)
-                .await
+            let r = self
+                .try_run_migration(migration, index, OperationType::Down)
+                .await;
+            self.trace_result(&migration, &r, OperationType::Down);
+
+            r
         } else {
             Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
         }
@@ -367,6 +393,12 @@ impl WithMigrationsVec {
         i: usize,
         operation_type: OperationType,
     ) -> Result<(), MigrationExecution> {
+        tracing::info!(
+            id = migration.get_id(),
+            op = format!("{:?}", operation_type),
+            status = format!("{:?}", MigrationStatus::InProgress)
+        );
+
         let (serialized_to_document_migration_record, migration_record) =
             self.prepare_initial_migration_record(migration, i)?;
 
@@ -414,8 +446,29 @@ impl WithMigrationsVec {
 
         Ok(())
     }
+
+    fn trace_result(
+        &self,
+        migration: &Box<dyn Migration>,
+        migration_result: &Result<(), MigrationExecution>,
+        operation_type: OperationType,
+    ) {
+        tracing::info!(
+            id = migration.get_id(),
+            op = format!("{:?}", operation_type),
+            status = format!(
+                "{:?}",
+                (if migration_result.is_ok() {
+                    MigrationStatus::Success
+                } else {
+                    MigrationStatus::Fail
+                })
+            )
+        );
+    }
 }
 
+#[derive(Debug)]
 enum OperationType {
     Up,
     Down,
