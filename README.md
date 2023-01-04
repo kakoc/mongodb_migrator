@@ -91,7 +91,7 @@ struct Users {
 
 - [x] Rust based migrations
 - [x] JavaScript based migrations
-- [ ] Logging
+- [x] Logging
 - [x] Rollbacks
 - [ ] Cli tool
 - [ ] UI dashboard
@@ -100,6 +100,7 @@ struct Users {
 - [ ] Stragegies
 	- [ ] Fail first
 	- [ ] Try all
+	- [ ] Retries
 
 
 
