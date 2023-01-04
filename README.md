@@ -16,11 +16,13 @@ mongodb-migrator = "0.1.8"
 ## Functionality
 - [Execute Rust based migrations][1]
 - [Execute JavaScript based migrations][2]
+- [Run as library][4]
 - [Run as RESTful service][3]
 
 [1]: https://github.com/kakoc/mongodb_migrator/blob/main/examples/as_lib.rs
-[2]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/shell.rs
+[2]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/shell/mod.rs
 [3]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/server/mod.rs
+[4]: https://github.com/kakoc/mongodb_migrator/blob/main/tests/basic/mod.rs
 
 ## How to use
 
