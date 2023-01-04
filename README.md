@@ -10,7 +10,7 @@ Mongodb migrations management tool.
 
 ```toml
 [dependencies]
-mongodb-migrator = "0.1.7"
+mongodb-migrator = "0.1.8"
 ```
 
 ## Functionality
