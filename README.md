@@ -100,7 +100,7 @@ struct Users {
 - [x] RESTful service
 - [ ] As npm package
 - [ ] Stragegies
-	- [ ] Fail first
+	- [x] Fail first
 	- [ ] Try all
 	- [ ] Retries
 
