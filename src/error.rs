@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::migration_record::MigrationRecord;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum MigrationExecution {
     #[error("Failed to create an initial record document for the migration which will be executed - {migration_id}
 	    record attempted to serialize: {migration_record:?}

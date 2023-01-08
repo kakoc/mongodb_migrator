@@ -18,6 +18,7 @@ impl WithShellConfig {
             // TODO(kakoc): rework forwarding: merge? split? -clone?
             with_shell_config: Some(self.clone()),
             with_connection: self.with_connection,
+            with_retries_per_migration: Default::default(),
         }
     }
 }

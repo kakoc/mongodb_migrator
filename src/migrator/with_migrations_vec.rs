@@ -1,11 +1,12 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, ops::Range, thread::sleep};
 
 use bson::{Bson, Document};
 use futures::StreamExt;
 use mongodb::{options::UpdateOptions, results::InsertOneResult};
 
 use super::{
-    shell::Shell, with_connection::WithConnection, with_shell_config::WithShellConfig, Env,
+    shell::Shell, with_connection::WithConnection, with_retries::Retry,
+    with_shell_config::WithShellConfig, Env,
 };
 use crate::{
     error::MigrationExecution, migration::Migration, migration_record::MigrationRecord,
@@ -16,6 +17,7 @@ pub struct WithMigrationsVec {
     pub with_shell_config: Option<WithShellConfig>,
     pub with_connection: WithConnection,
     pub migrations: Vec<Box<dyn Migration>>,
+    pub with_retries_per_migration: Retry,
 }
 
 impl WithMigrationsVec {
@@ -30,16 +32,13 @@ impl WithMigrationsVec {
         }
     }
 
-    async fn get_migrations_ids_to_execute_from_index(&self, lookup_from: usize) -> Vec<String> {
-        if self.migrations.len() - 1 == lookup_from {
-            vec![]
-        } else {
-            let ids = self.migrations[lookup_from..]
-                .into_iter()
-                .map(|migration| migration.get_id().to_string())
-                .collect::<Vec<String>>();
+    async fn get_migrations_ids_to_execute_from_index(&self, range: Range<usize>) -> Vec<String> {
+        let ids = self.migrations[range]
+            .into_iter()
+            .map(|migration| migration.get_id().to_string())
+            .collect::<Vec<String>>();
 
-            let mut failed = self.with_connection
+        let mut failed = self.with_connection
                 .db
                 .clone()
                 .collection("migrations")
@@ -54,26 +53,25 @@ impl WithMigrationsVec {
 		.map(|v: MigrationRecord| v._id.to_string())
 		.collect::<Vec<String>>();
 
-            // TODO(koc_kakoc): use Set
-            let all = self
-                .with_connection
-                .db
-                .clone()
-                .collection("migrations")
-                .find(bson::doc! {}, None)
-                .await
-                .unwrap()
-                .collect::<Vec<_>>()
-                .await
-                .into_iter()
-                // TODO(koc_kakoc): replace unwrap?
-                .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-                .map(|v: MigrationRecord| v._id.to_string())
-                .collect::<Vec<String>>();
+        // TODO(koc_kakoc): use Set
+        let all = self
+            .with_connection
+            .db
+            .clone()
+            .collection("migrations")
+            .find(bson::doc! {}, None)
+            .await
+            .unwrap()
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            // TODO(koc_kakoc): replace unwrap?
+            .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
+            .map(|v: MigrationRecord| v._id.to_string())
+            .collect::<Vec<String>>();
 
-            failed.extend(ids.into_iter().filter(|id| !all.contains(&id)));
-            failed
-        }
+        failed.extend(ids.into_iter().filter(|id| !all.contains(&id)));
+        failed
     }
 
     /// This function executes all passed migrations in the passed order
@@ -89,57 +87,73 @@ impl WithMigrationsVec {
     ///   handleIfResultWasntSaved
     ///   returnIfMigrationUpWithFailedResultWithAllNextSavedAsFail
     pub async fn up(&self) -> Result<(), MigrationExecution> {
+        self.exec(
+            Range {
+                start: 0,
+                end: self.migrations.len(),
+            },
+            OperationType::Up,
+        )
+        .await
+    }
+
+    async fn exec(
+        &self,
+        range: Range<usize>,
+        operation_type: OperationType,
+    ) -> Result<(), MigrationExecution> {
         self.validate()?;
 
-        // TODO(koc_kakoc): execute only failed or not stored in migrations collections
-        let ids = self.get_migrations_ids_to_execute_from_index(0).await;
+        let ids = self.get_migrations_ids_to_execute_from_index(range).await;
+
         tracing::info!(
             message = "the following migrations are going to be executed",
             ids = format!("{:?}", ids),
-            op = format!("{:?}", OperationType::Up)
+            op = format!("{:?}", operation_type.clone())
         );
-        for (i, migration) in self
-            .migrations
-            .iter()
-            .filter(|m| ids.contains(&m.get_id().to_string()))
-            .enumerate()
-        {
-            let r = self
-                .try_run_migration(migration, i, OperationType::Up)
-                .await;
-            self.trace_result(&migration, &r, OperationType::Up);
 
-            r?
+        let it = match operation_type {
+            OperationType::Up => self
+                .migrations
+                .iter()
+                .filter(|m| ids.contains(&m.get_id().to_string()))
+                .collect::<Vec<_>>(),
+            OperationType::Down => self
+                .migrations
+                .iter()
+                .rev()
+                .filter(|m| ids.contains(&m.get_id().to_string()))
+                .collect::<Vec<_>>(),
+        };
+
+        for (i, migration) in it.into_iter().enumerate() {
+            let mut retries = self.with_retries_per_migration.count;
+
+            while let Err(e) = self
+                .try_run_migration(migration, i, operation_type.clone())
+                .await
+            {
+                self.trace_result(&migration, &Err(e.clone()), operation_type.clone());
+                if retries == 0 {
+                    return Err(e);
+                }
+                retries -= 1;
+                sleep(self.with_retries_per_migration.delay);
+            }
         }
 
         Ok(())
     }
 
     pub async fn down(&self) -> Result<(), MigrationExecution> {
-        self.validate()?;
-
-        let ids = self.get_migrations_ids_to_execute_from_index(0).await;
-        tracing::info!(
-            message = "the following migrations are going to be executed",
-            ids = format!("{:?}", ids),
-            op = format!("{:?}", OperationType::Down)
-        );
-        for (i, migration) in self
-            .migrations
-            .iter()
-            .rev()
-            .filter(|m| ids.contains(&m.get_id().to_string()))
-            .enumerate()
-        {
-            let r = self
-                .try_run_migration(migration, i, OperationType::Down)
-                .await;
-            self.trace_result(&migration, &r, OperationType::Down);
-
-            r?
-        }
-
-        Ok(())
+        self.exec(
+            Range {
+                start: 0,
+                end: self.migrations.len(),
+            },
+            OperationType::Down,
+        )
+        .await
     }
 
     async fn save_not_executed_migrations(
@@ -189,22 +203,21 @@ impl WithMigrationsVec {
 
     /// Tries to up a migration from the passed before vec
     pub async fn up_single_from_vec(&self, migration_id: String) -> Result<(), MigrationExecution> {
-        self.validate()?;
-
         let migration = self
             .migrations
             .iter()
             .enumerate()
-            .find(|(_index, migration)| migration.get_id().to_string() == migration_id);
+            .position(|(_index, migration)| migration.get_id().to_string() == migration_id);
 
-        if migration.is_some() {
-            let (index, migration) = migration.unwrap();
-            let r = self
-                .try_run_migration(migration, index, OperationType::Up)
-                .await;
-            self.trace_result(&migration, &r, OperationType::Up);
-
-            r
+        if let Some(i) = migration {
+            self.exec(
+                Range {
+                    start: i,
+                    end: i + 1,
+                },
+                OperationType::Up,
+            )
+            .await
         } else {
             Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
         }
@@ -215,22 +228,21 @@ impl WithMigrationsVec {
         &self,
         migration_id: String,
     ) -> Result<(), MigrationExecution> {
-        self.validate()?;
-
         let migration = self
             .migrations
             .iter()
             .enumerate()
-            .find(|(_index, migration)| migration.get_id().to_string() == migration_id);
+            .position(|(_index, migration)| migration.get_id().to_string() == migration_id);
 
-        if migration.is_some() {
-            let (index, migration) = migration.unwrap();
-            let r = self
-                .try_run_migration(migration, index, OperationType::Down)
-                .await;
-            self.trace_result(&migration, &r, OperationType::Down);
-
-            r
+        if let Some(i) = migration {
+            self.exec(
+                Range {
+                    start: i,
+                    end: i + 1,
+                },
+                OperationType::Down,
+            )
+            .await
         } else {
             Err(MigrationExecution::MigrationFromVecNotFound { migration_id })
         }
@@ -468,7 +480,7 @@ impl WithMigrationsVec {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum OperationType {
     Up,
     Down,
