@@ -19,6 +19,7 @@ impl WithShellConfig {
             with_shell_config: Some(self.clone()),
             with_connection: self.with_connection,
             with_retries_per_migration: Default::default(),
+            collection_name: None,
         }
     }
 }

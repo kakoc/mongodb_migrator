@@ -33,6 +33,7 @@ impl WithRetries {
             with_shell_config: None,
             with_connection: self.with_connection,
             with_retries_per_migration: self.with_retries_per_migration,
+            collection_name: None,
         }
     }
 }

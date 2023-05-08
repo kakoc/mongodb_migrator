@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{collections::BTreeMap, ops::Range, thread::sleep};
 
 use bson::{Bson, Document};
@@ -18,9 +19,27 @@ pub struct WithMigrationsVec {
     pub with_connection: WithConnection,
     pub migrations: Vec<Box<dyn Migration>>,
     pub with_retries_per_migration: Retry,
+    pub collection_name: Option<String>,
 }
 
 impl WithMigrationsVec {
+    /// Set custom migrations collection name
+    pub fn set_collection_name<S: Into<String>>(
+        &mut self,
+        collection_name: S,
+    ) -> &mut WithMigrationsVec {
+        self.collection_name = Some(collection_name.into());
+        self
+    }
+
+    /// Get collection name
+    fn get_collection_name(&self) -> Cow<'static, str> {
+        match self.collection_name.clone() {
+            None => "migrations".into(),
+            Some(collection_name) => collection_name.into(),
+        }
+    }
+
     fn get_not_executed_migrations_ids(&self, first_failed_migration_index: usize) -> Vec<String> {
         if self.migrations.len() - 1 == first_failed_migration_index {
             vec![]
@@ -41,7 +60,7 @@ impl WithMigrationsVec {
         let mut failed = self.with_connection
                 .db
                 .clone()
-                .collection("migrations")
+                .collection(&self.get_collection_name())
                 .find(
                     bson::doc! {"_id": {"$in": ids.clone()}, "status": format!("{:?}", MigrationStatus::Fail)},
                     None,
@@ -58,7 +77,7 @@ impl WithMigrationsVec {
             .with_connection
             .db
             .clone()
-            .collection("migrations")
+            .collection(&self.get_collection_name())
             .find(bson::doc! {}, None)
             .await
             .unwrap()
@@ -302,7 +321,7 @@ impl WithMigrationsVec {
             .with_connection
             .db
             .clone()
-            .collection("migrations")
+            .collection(&self.get_collection_name())
             .insert_one(serialized_to_document_migration_record, None)
             .await
             .map_err(|error| MigrationExecution::InProgressStatusNotSaved {
