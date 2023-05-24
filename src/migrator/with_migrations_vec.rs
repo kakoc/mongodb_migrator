@@ -200,7 +200,7 @@ impl WithMigrationsVec {
             self.with_connection
                 .db
                 .clone()
-                .collection::<MigrationRecord>("migrations")
+                .collection::<MigrationRecord>(&self.get_collection_name())
                 .update_one(
                     bson::doc! {"_id": &migration_record._id},
                     bson::doc! {"$set": serialized_to_document_migration_record},
@@ -345,7 +345,7 @@ impl WithMigrationsVec {
         self.with_connection
             .db
             .clone()
-            .collection::<MigrationRecord>("migrations")
+            .collection::<MigrationRecord>(&self.get_collection_name())
             .update_one(
                 bson::doc! {"_id": res.inserted_id},
                 bson::doc! {"$set": serialized_to_document_migration_record},
