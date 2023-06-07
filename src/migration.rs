@@ -21,7 +21,7 @@ pub trait Migration: Sync + Send {
     /// is guaranteed out of the box
     fn get_id(&self) -> &str {
         // if a migration placed inside e.g. `tests::utils::M0`
-        // then an id will be "tests::auto_gen_migration_id::M0"
+        // then an id will be "tests::utils::M0"
         // for a simplicity lets cut it up to a struct name, i.e. `M0`
         let full_path = std::any::type_name::<Self>();
 
