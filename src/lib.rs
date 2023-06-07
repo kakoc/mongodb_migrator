@@ -10,7 +10,6 @@
 //! use async_trait::async_trait;
 //! use mongodb::Database;
 //! use serde_derive::{Deserialize, Serialize};
-//! use testcontainers::Docker;
 //!
 //! use mongodb_migrator::{migration::Migration, migrator::Env};
 //!
@@ -18,7 +17,7 @@
 //! async fn main() -> Result<()> {
 //!     let docker = testcontainers::clients::Cli::default();
 //!     let node = docker.run(testcontainers::images::mongo::Mongo::default());
-//!     let host_port = node.get_host_port(27017).unwrap();
+//!     let host_port = node.get_host_port_ipv4(27017);
 //!     let url = format!("mongodb://localhost:{}/", host_port);
 //!     let client = mongodb::Client::with_uri_str(url).await.unwrap();
 //!     let db = client.database("test");

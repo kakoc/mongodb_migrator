@@ -3,15 +3,15 @@ use async_trait::async_trait;
 use bson::Bson;
 use futures::stream::StreamExt;
 use serde_derive::{Deserialize, Serialize};
-use testcontainers::{clients::Cli, images::mongo::Mongo, Container};
+use testcontainers::{images::mongo::Mongo, Container};
 
 use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
     migrator::Env,
 };
 
-pub async fn basic<'a>(node: &Container<'a, Cli, Mongo>) {
-    let host_port = node.get_host_port(27017).unwrap();
+pub async fn basic<'a>(node: &Container<'a, Mongo>) {
+    let host_port = node.get_host_port_ipv4(27017);
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();
     let db = client.database("test");
@@ -70,8 +70,8 @@ struct Users {
     name: String,
 }
 
-pub async fn custom_collection_name<'a>(node: &Container<'a, Cli, Mongo>) {
-    let host_port = node.get_host_port(27017).unwrap();
+pub async fn custom_collection_name<'a>(node: &Container<'a, Mongo>) {
+    let host_port = node.get_host_port_ipv4(27017);
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();
     let db = client.database("test");
