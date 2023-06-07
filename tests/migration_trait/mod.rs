@@ -15,5 +15,5 @@ impl Migration for M0 {
 pub fn migration_id_autoderived() {
     let m = M0 {};
 
-    assert_eq!("tests::migration_trait::M0", m.get_id());
+    assert_eq!("M0", m.get_id());
 }

@@ -69,10 +69,6 @@ impl Migration for M0 {
 
         Ok(())
     }
-
-    fn get_id(&self) -> &str {
-        "M0"
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -97,10 +93,6 @@ impl Migration for M1 {
 
         Ok(())
     }
-
-    fn get_id(&self) -> &str {
-        "M1"
-    }
 }
 
 #[async_trait]
@@ -120,19 +112,11 @@ impl Migration for M2 {
 
         Ok(())
     }
-
-    fn get_id(&self) -> &str {
-        "M2"
-    }
 }
 
 #[async_trait]
 impl Migration for M3 {
     async fn up(&self, _env: Env) -> Result<()> {
         Err(anyhow::Error::msg("test error".to_string()))
-    }
-
-    fn get_id(&self) -> &str {
-        "M3"
     }
 }

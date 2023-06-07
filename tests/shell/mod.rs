@@ -43,10 +43,6 @@ impl Migration for M0 {
 
         Ok(())
     }
-
-    fn get_id(&self) -> &str {
-        "M0"
-    }
 }
 
 #[async_trait]
@@ -58,10 +54,6 @@ impl Migration for M1 {
         )?;
 
         Ok(())
-    }
-
-    fn get_id(&self) -> &str {
-        "M1"
     }
 }
 
