@@ -24,6 +24,7 @@ async fn run_all_tests() {
     }
 
     run_test!(basic::basic(&t.node).await);
+    run_test!(basic::custom_collection_name(&t.node).await);
 
     run_test!(fail::with_failed_migration_should_stop_after_first_fail_and_save_failed_with_next_not_executed_as_failed(&t).await);
 
