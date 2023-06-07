@@ -13,3 +13,9 @@ impl DefaultMigrator {
         WithConnection { db }
     }
 }
+
+impl Default for DefaultMigrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}

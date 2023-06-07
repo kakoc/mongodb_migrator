@@ -53,7 +53,7 @@ impl WithMigrationsVec {
 
     async fn get_migrations_ids_to_execute_from_index(&self, range: Range<usize>) -> Vec<String> {
         let ids = self.migrations[range]
-            .into_iter()
+            .iter()
             .map(|migration| migration.get_id().to_string())
             .collect::<Vec<String>>();
 
@@ -69,7 +69,7 @@ impl WithMigrationsVec {
 		.into_iter()
 		// TODO(koc_kakoc): replace unwrap?
 		.map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-		.map(|v: MigrationRecord| v._id.to_string())
+		.map(|v: MigrationRecord| v._id)
 		.collect::<Vec<String>>();
 
         // TODO(koc_kakoc): use Set
@@ -86,10 +86,10 @@ impl WithMigrationsVec {
             .into_iter()
             // TODO(koc_kakoc): replace unwrap?
             .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-            .map(|v: MigrationRecord| v._id.to_string())
+            .map(|v: MigrationRecord| v._id)
             .collect::<Vec<String>>();
 
-        failed.extend(ids.into_iter().filter(|id| !all.contains(&id)));
+        failed.extend(ids.into_iter().filter(|id| !all.contains(id)));
         failed
     }
 
@@ -149,10 +149,10 @@ impl WithMigrationsVec {
             let mut retries = self.with_retries_per_migration.count;
 
             while let Err(e) = self
-                .try_run_migration(migration, i, operation_type.clone())
+                .try_run_migration(&**migration, i, operation_type.clone())
                 .await
             {
-                self.trace_result(&migration, &Err(e.clone()), operation_type.clone());
+                self.trace_result(&**migration, &Err(e.clone()), operation_type.clone());
                 if retries == 0 {
                     return Err(e);
                 }
@@ -226,7 +226,7 @@ impl WithMigrationsVec {
             .migrations
             .iter()
             .enumerate()
-            .position(|(_index, migration)| migration.get_id().to_string() == migration_id);
+            .position(|(_index, migration)| migration.get_id() == migration_id);
 
         if let Some(i) = migration {
             self.exec(
@@ -251,7 +251,7 @@ impl WithMigrationsVec {
             .migrations
             .iter()
             .enumerate()
-            .position(|(_index, migration)| migration.get_id().to_string() == migration_id);
+            .position(|(_index, migration)| migration.get_id() == migration_id);
 
         if let Some(i) = migration {
             self.exec(
@@ -267,6 +267,7 @@ impl WithMigrationsVec {
         }
     }
 
+    #[allow(clippy::result_large_err)]
     fn validate(&self) -> Result<(), MigrationExecution> {
         let mut entries = BTreeMap::new();
         self.migrations
@@ -284,16 +285,17 @@ impl WithMigrationsVec {
             .filter(|(_id, indices)| indices.len() > 1)
             .collect::<BTreeMap<String, Vec<usize>>>();
 
-        if duplicates.len() > 0 {
+        if !duplicates.is_empty() {
             Err(MigrationExecution::PassedMigrationsWithDuplicatedIds { duplicates })
         } else {
             Ok(())
         }
     }
 
+    #[allow(clippy::result_large_err)]
     fn prepare_initial_migration_record(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         i: usize,
     ) -> Result<(Document, MigrationRecord), MigrationExecution> {
         let migration_record = MigrationRecord::migration_start(migration.get_id().to_string());
@@ -313,12 +315,11 @@ impl WithMigrationsVec {
 
     async fn save_initial_migration_record(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         serialized_to_document_migration_record: Document,
         i: usize,
     ) -> Result<InsertOneResult, MigrationExecution> {
-        Ok(self
-            .with_connection
+        self.with_connection
             .db
             .clone()
             .collection(&self.get_collection_name())
@@ -328,12 +329,12 @@ impl WithMigrationsVec {
                 migration_id: migration.get_id().to_string(),
                 additional_info: error,
                 next_not_executed_migrations_ids: self.get_not_executed_migrations_ids(i),
-            })?)
+            })
     }
 
     async fn save_executed_migration_record(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         migration_record: &MigrationRecord,
         serialized_to_document_migration_record: Document,
         res: InsertOneResult,
@@ -380,16 +381,14 @@ impl WithMigrationsVec {
 
     async fn up_migration(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         shell: Option<Shell>,
         migration_record: &MigrationRecord,
     ) -> MigrationRecord {
         migration
-            .clone()
             .up(Env {
                 db: Some(self.with_connection.db.clone()),
                 shell,
-                ..Default::default()
             })
             .await
             .map_or_else(
@@ -400,16 +399,14 @@ impl WithMigrationsVec {
 
     async fn down_migration(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         shell: Option<Shell>,
         migration_record: &MigrationRecord,
     ) -> MigrationRecord {
         migration
-            .clone()
             .down(Env {
                 db: Some(self.with_connection.db.clone()),
                 shell,
-                ..Default::default()
             })
             .await
             .map_or_else(
@@ -420,7 +417,7 @@ impl WithMigrationsVec {
 
     async fn try_run_migration(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         i: usize,
         operation_type: OperationType,
     ) -> Result<(), MigrationExecution> {
@@ -480,7 +477,7 @@ impl WithMigrationsVec {
 
     fn trace_result(
         &self,
-        migration: &Box<dyn Migration>,
+        migration: &dyn Migration,
         migration_result: &Result<(), MigrationExecution>,
         operation_type: OperationType,
     ) {

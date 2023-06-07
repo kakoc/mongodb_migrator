@@ -54,7 +54,7 @@ impl Shell {
         Ok(out_as_json)
     }
 
-    fn out_to_json(&self, shell_out: &String) -> Result<Value> {
-        Ok(serde_json::from_str(&shell_out)?)
+    fn out_to_json(&self, shell_out: &str) -> Result<Value> {
+        Ok(serde_json::from_str(shell_out)?)
     }
 }

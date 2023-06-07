@@ -41,7 +41,7 @@ pub async fn migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
             .await
             .into_iter()
             .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-            .map(|v: MigrationRecord| v._id.to_string())
+            .map(|v: MigrationRecord| v._id)
             .collect::<Vec<String>>();
 
     assert_eq!(all_records, migrations_ids);
@@ -83,7 +83,7 @@ pub async fn down_migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
             .await
             .into_iter()
             .map(|v| bson::from_bson(Bson::Document(v.unwrap())).unwrap())
-            .map(|v: MigrationRecord| v._id.to_string())
+            .map(|v: MigrationRecord| v._id)
             .collect::<Vec<String>>();
 
     assert_eq!(

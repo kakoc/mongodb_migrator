@@ -18,7 +18,7 @@ pub async fn validation_fails_when_passed_with_duplicates<'a>(t: &TestDb<'a>) {
                 3
             );
         }
-        _ => assert!(false),
+        _ => unreachable!(),
     }
 }
 

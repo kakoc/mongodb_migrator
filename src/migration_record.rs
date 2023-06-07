@@ -21,7 +21,7 @@ pub struct MigrationRecord {
 impl MigrationRecord {
     pub fn migration_start(migration_name: String) -> Self {
         MigrationRecord {
-            _id: migration_name.clone(),
+            _id: migration_name,
             start_date: Some(Utc::now()),
             end_date: None,
             status: MigrationStatus::InProgress,

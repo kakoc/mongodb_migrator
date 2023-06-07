@@ -22,17 +22,8 @@ pub enum Migrator {
     WithRetries(WithRetries),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Env {
     pub db: Option<Database>,
     pub shell: Option<Shell>,
-}
-
-impl Default for Env {
-    fn default() -> Self {
-        Self {
-            db: None,
-            shell: None,
-        }
-    }
 }

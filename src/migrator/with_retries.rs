@@ -10,19 +10,10 @@ pub struct WithRetries {
     pub with_retries_per_migration: Retry,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Retry {
     pub count: usize,
     pub delay: Duration,
-}
-
-impl Default for Retry {
-    fn default() -> Self {
-        Self {
-            count: 0,
-            delay: Default::default(),
-        }
-    }
 }
 
 impl WithRetries {

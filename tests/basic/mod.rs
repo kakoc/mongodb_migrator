@@ -79,7 +79,7 @@ pub async fn custom_collection_name<'a>(node: &Container<'a, Cli, Mongo>) {
     struct M0 {}
     #[async_trait]
     impl Migration for M0 {
-        async fn up(&self, env: Env) -> Result<()> {
+        async fn up(&self, _env: Env) -> Result<()> {
             Ok(())
         }
     }
