@@ -10,7 +10,7 @@ use mongodb_migrator::{
     migrator::Env,
 };
 
-pub async fn basic<'a>(node: &Container<'a, Mongo>) {
+pub async fn basic(node: &Container<'_, Mongo>) {
     let host_port = node.get_host_port_ipv4(27017);
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();
@@ -70,7 +70,7 @@ struct Users {
     name: String,
 }
 
-pub async fn custom_collection_name<'a>(node: &Container<'a, Mongo>) {
+pub async fn custom_collection_name(node: &Container<'_, Mongo>) {
     let host_port = node.get_host_port_ipv4(27017);
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();

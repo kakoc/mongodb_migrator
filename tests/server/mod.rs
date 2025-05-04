@@ -15,7 +15,7 @@ pub async fn server_runs_migrations_by_id() {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let docker = testcontainers::clients::Cli::default();
-    let node = docker.run(testcontainers::images::mongo::Mongo::default());
+    let node = docker.run(testcontainers::images::mongo::Mongo);
     let host_port = node.get_host_port_ipv4(27017);
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();

@@ -8,7 +8,7 @@ use mongodb_migrator::{
 
 use super::utils::{init_migrator_with_migrations, TestDb, M0, M1, M2, M3};
 
-pub async fn picks_only_failed<'a>(t: &TestDb<'a>) {
+pub async fn picks_only_failed(t: &TestDb<'_>) {
     let migration_record = MigrationRecord::migration_succeeded(MigrationRecord::migration_start(
         M0 {}.get_id().to_string(),
     ));

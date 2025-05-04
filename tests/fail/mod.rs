@@ -7,10 +7,8 @@ use mongodb_migrator::{
 
 use super::utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2, M3};
 
-pub async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_with_next_not_executed_as_failed<
-    'a,
->(
-    t: &TestDb<'a>,
+pub async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_with_next_not_executed_as_failed(
+    t: &TestDb<'_>,
 ) {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(M0 {}),

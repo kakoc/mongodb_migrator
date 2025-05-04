@@ -9,7 +9,7 @@ use mongodb_migrator::{
 use super::utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2};
 
 // M0 -> M1 -> M2
-pub async fn migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
+pub async fn migrations_executed_in_specified_order(t: &TestDb<'_>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -41,7 +41,7 @@ pub async fn migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
 }
 
 /// M0(Success) , M1(Success) , M2(Success)
-pub async fn all_migrations_have_success_status<'a>(t: &TestDb<'a>) {
+pub async fn all_migrations_have_success_status(t: &TestDb<'_>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_len = migrations.len();
@@ -67,7 +67,7 @@ pub async fn all_migrations_have_success_status<'a>(t: &TestDb<'a>) {
     assert!(all_records.iter().all(|v| *v == MigrationStatus::Success));
 }
 
-pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a>(t: &TestDb<'a>) {
+pub async fn migrations_not_just_saved_as_executed_but_really_affected_target(t: &TestDb<'_>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
 
@@ -87,7 +87,7 @@ pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a
 
 // M2 -> M1 -> M0
 // TODO(kakoc) : move all down to a separate folder?
-pub async fn down_migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
+pub async fn down_migrations_executed_in_specified_order(t: &TestDb<'_>) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations

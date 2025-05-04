@@ -15,7 +15,7 @@ pub struct TestDb<'a> {
 
 impl<'a> TestDb<'a> {
     pub async fn new(docker: &'a testcontainers::clients::Cli) -> TestDb<'a> {
-        let node = docker.run(testcontainers::images::mongo::Mongo::default());
+        let node = docker.run(testcontainers::images::mongo::Mongo);
         let host_port = node.get_host_port_ipv4(27017);
         let url = format!("mongodb://localhost:{}/", host_port);
         let client = mongodb::Client::with_uri_str(url).await.unwrap();
