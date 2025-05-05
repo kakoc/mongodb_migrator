@@ -12,12 +12,15 @@
 //! use serde_derive::{Deserialize, Serialize};
 //!
 //! use mongodb_migrator::{migration::Migration, migrator::Env};
+//! use testcontainers_modules::{
+//!     mongo::Mongo,
+//!     testcontainers::{runners::AsyncRunner, ContainerAsync},
+//! };
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
-//!     let docker = testcontainers::clients::Cli::default();
-//!     let node = docker.run(testcontainers::images::mongo::Mongo::default());
-//!     let host_port = node.get_host_port_ipv4(27017);
+//!     let node = Mongo::default().start().await.unwrap();
+//!     let host_port = node.get_host_port_ipv4(27017).await.unwrap();
 //!     let url = format!("mongodb://localhost:{}/", host_port);
 //!     let client = mongodb::Client::with_uri_str(url).await.unwrap();
 //!     let db = client.database("test");

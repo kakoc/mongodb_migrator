@@ -2,7 +2,7 @@
 use super::utils::{init_migrator_with_migrations, TestDb, M0, M1, M2};
 use mongodb_migrator::{error::MigrationExecution, migration::Migration};
 
-pub async fn validation_fails_when_passed_with_duplicates(t: &TestDb<'_>) {
+pub async fn validation_fails_when_passed_with_duplicates(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M0 {}), Box::new(M0 {})];
 
@@ -19,7 +19,7 @@ pub async fn validation_fails_when_passed_with_duplicates(t: &TestDb<'_>) {
     }
 }
 
-pub async fn validation_passes_since_all_unique(t: &TestDb<'_>) {
+pub async fn validation_passes_since_all_unique(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
 

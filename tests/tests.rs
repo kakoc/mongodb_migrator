@@ -14,8 +14,7 @@ mod version_numbers;
 
 #[tokio::test]
 async fn run_all_tests() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
+    let t = TestDb::new().await;
     macro_rules! run_test {
         ($b:stmt) => {
             $b

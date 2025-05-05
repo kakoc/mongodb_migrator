@@ -6,17 +6,20 @@ use mongodb_migrator::{
     migrator::{shell::ShellConfig, Env},
 };
 use serde_derive::{Deserialize, Serialize};
-use testcontainers::{images::mongo::Mongo, Container};
+use testcontainers_modules::{
+    mongo::Mongo,
+    testcontainers::{runners::AsyncRunner, ContainerAsync},
+};
 
-pub struct TestDb<'a> {
-    pub node: Container<'a, Mongo>,
+pub struct TestDb {
+    pub node: ContainerAsync<Mongo>,
     pub db: Database,
 }
 
-impl<'a> TestDb<'a> {
-    pub async fn new(docker: &'a testcontainers::clients::Cli) -> TestDb<'a> {
-        let node = docker.run(testcontainers::images::mongo::Mongo);
-        let host_port = node.get_host_port_ipv4(27017);
+impl TestDb {
+    pub async fn new() -> TestDb {
+        let node = Mongo::default().start().await.unwrap();
+        let host_port = node.get_host_port_ipv4(27017).await.unwrap();
         let url = format!("mongodb://localhost:{}/", host_port);
         let client = mongodb::Client::with_uri_str(url).await.unwrap();
         let db = client.database("test");

@@ -8,8 +8,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::utils::{init_shell_migrator_with_migrations, TestDb};
 
-pub async fn shell(t: &TestDb<'_>) {
-    let host_port = t.node.get_host_port_ipv4(27017);
+pub async fn shell(t: &TestDb) {
+    let host_port = t.node.get_host_port_ipv4(27017).await.unwrap();
     let shell_config = ShellConfig {
         port: host_port as usize,
         ..Default::default()

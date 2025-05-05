@@ -30,7 +30,8 @@ axum = "0.6.18"
 tokio = { version = "1.28.2", features = ["full"] }
 
 [dev-dependencies]
-testcontainers = "0.14.0"
+testcontainers = "0.24.0"
+testcontainers-modules = { version = "0.12.0", features = ["mongo"] }
 rusty-hook = "0.11.2"
 version-sync = "0.9.4"
 hyper = { version = "0.14.26", features = ["client"] }

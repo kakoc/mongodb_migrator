@@ -6,7 +6,7 @@ use mongodb::options::FindOptions;
 use mongodb_migrator::{migration::Migration, migration_record::MigrationRecord};
 
 // M0 -> M1 -> M2
-pub async fn migrations_executed_in_single_manner(t: &TestDb<'_>) {
+pub async fn migrations_executed_in_single_manner(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -48,7 +48,7 @@ pub async fn migrations_executed_in_single_manner(t: &TestDb<'_>) {
 }
 
 // M0 -> M1 -> M2
-pub async fn down_migrations_executed_in_single_manner(t: &TestDb<'_>) {
+pub async fn down_migrations_executed_in_single_manner(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
