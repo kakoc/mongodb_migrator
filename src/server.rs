@@ -67,11 +67,11 @@ pub async fn server(params: ServiceParams) {
 }
 
 fn ups() -> Router<SharedState> {
-    Router::new().route("/:id", post(up_migration_with_id))
+    Router::new().route("/{id}", post(up_migration_with_id))
 }
 
 fn downs() -> Router<SharedState> {
-    Router::new().route("/:id", post(down_migration_with_id))
+    Router::new().route("/{id}", post(down_migration_with_id))
 }
 
 async fn up_migration_with_id(
