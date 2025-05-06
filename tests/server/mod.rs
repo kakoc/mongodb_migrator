@@ -1,8 +1,10 @@
 //! These tests check how single migration via http server run works
 use super::utils::{M0, M1, M2};
+use axum::body::Body;
 use bson::Bson;
 use futures::stream::StreamExt;
-use hyper::{Body, Client, Request, StatusCode};
+use hyper::{Request, StatusCode};
+use hyper_util::{client::legacy::Client, rt::TokioExecutor};
 use mongodb::Database;
 use mongodb_migrator::{
     migration::Migration,
@@ -56,7 +58,8 @@ async fn check_ups(db: &Database) {
         .map(|m| m.get_id().to_string())
         .collect::<Vec<String>>();
 
-    let client = Client::new();
+    let client = Client::builder(TokioExecutor::new()).build_http();
+
     let response = client
         .request(
             Request::builder()
@@ -120,7 +123,7 @@ async fn check_downs(db: &Database) {
         .map(|m| m.get_id().to_string())
         .collect::<Vec<String>>();
 
-    let client = Client::new();
+    let client = Client::builder(TokioExecutor::new()).build_http();
     let response = client
         .request(
             Request::builder()
