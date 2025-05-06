@@ -13,7 +13,7 @@ keywords = ["mongodb"]
 [dependencies]
 async-trait = "0.1.68"
 chrono = { version = "0.4.26", features = ["serde"] }
-mongodb = "2.8.2"
+mongodb = "3.2.3"
 bson = "2.14.0"
 anyhow = "1.0.71"
 serde = "1.0.163"

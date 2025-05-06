@@ -14,7 +14,7 @@ pub async fn picks_only_failed(t: &TestDb) {
     ));
 
     t.db.collection("migrations")
-        .insert_one(bson::to_document(&migration_record).unwrap(), None)
+        .insert_one(bson::to_document(&migration_record).unwrap())
         .await
         .unwrap();
 
@@ -31,7 +31,7 @@ pub async fn picks_only_failed(t: &TestDb) {
 
     let saved_migration_before =
         t.db.collection("migrations")
-            .find_one(bson::doc! {"_id": M0{}.get_id()}, None)
+            .find_one(bson::doc! {"_id": M0{}.get_id()})
             .await
             .unwrap()
             .unwrap();
@@ -42,7 +42,7 @@ pub async fn picks_only_failed(t: &TestDb) {
 
     assert_eq!(
         t.db.collection("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -59,7 +59,7 @@ pub async fn picks_only_failed(t: &TestDb) {
 
     assert_eq!(
         t.db.collection::<MigrationRecord>("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()

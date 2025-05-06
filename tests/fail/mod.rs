@@ -24,14 +24,14 @@ pub async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_
     assert!(t
         .db
         .collection::<Users>("users")
-        .find_one(bson::doc! {"x": 0}, None)
+        .find_one(bson::doc! {"x": 0})
         .await
         .unwrap()
         .is_some());
 
     assert_eq!(
         t.db.collection("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -48,7 +48,7 @@ pub async fn with_failed_migration_should_stop_after_first_fail_and_save_failed_
 
     assert_eq!(
         t.db.collection::<MigrationRecord>("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()

@@ -42,7 +42,7 @@
 //! impl Migration for M0 {
 //!     async fn up(&self, env: Env) -> Result<()> {
 //!         env.db.expect("db is available").collection("users")
-//!             .insert_one(bson::doc! { "name": "Batman" }, None)
+//!             .insert_one(bson::doc! { "name": "Batman" })
 //!             .await?;
 //!
 //!         Ok(())
@@ -56,7 +56,6 @@
 //!             .update_one(
 //!                 bson::doc! { "name": "Batman" },
 //!                 bson::doc! { "$set": { "name": "Superman" } },
-//!                 None,
 //!             )
 //!             .await?;
 //!

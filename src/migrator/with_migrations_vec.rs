@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, ops::Range, thread::sleep};
 
 use bson::{Bson, Document};
 use futures::StreamExt;
-use mongodb::{options::UpdateOptions, results::InsertOneResult};
+use mongodb::results::InsertOneResult;
 
 use super::{
     shell::Shell, with_connection::WithConnection, with_retries::Retry,
@@ -63,7 +63,6 @@ impl WithMigrationsVec {
                 .collection(&self.get_collection_name())
                 .find(
                     bson::doc! {"_id": {"$in": ids.clone()}, "status": format!("{:?}", MigrationStatus::Fail)},
-                    None,
                 )
 		.await.unwrap().collect::<Vec<_>>().await
 		.into_iter()
@@ -78,7 +77,7 @@ impl WithMigrationsVec {
             .db
             .clone()
             .collection(&self.get_collection_name())
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -194,9 +193,6 @@ impl WithMigrationsVec {
                     additional_info: error,
                 })?;
 
-            let mut u_o: UpdateOptions = Default::default();
-            u_o.upsert = Some(true);
-
             self.with_connection
                 .db
                 .clone()
@@ -204,8 +200,8 @@ impl WithMigrationsVec {
                 .update_one(
                     bson::doc! {"_id": &migration_record._id},
                     bson::doc! {"$set": serialized_to_document_migration_record},
-                    u_o,
                 )
+                .upsert(true)
                 .await
                 .map_err(
                     |error| MigrationExecution::FinishedButNotSavedDueMongoError {
@@ -323,7 +319,7 @@ impl WithMigrationsVec {
             .db
             .clone()
             .collection(&self.get_collection_name())
-            .insert_one(serialized_to_document_migration_record, None)
+            .insert_one(serialized_to_document_migration_record)
             .await
             .map_err(|error| MigrationExecution::InProgressStatusNotSaved {
                 migration_id: migration.get_id().to_string(),
@@ -340,9 +336,6 @@ impl WithMigrationsVec {
         res: InsertOneResult,
         i: usize,
     ) -> Result<(), MigrationExecution> {
-        let mut u_o: UpdateOptions = Default::default();
-        u_o.upsert = Some(true);
-
         self.with_connection
             .db
             .clone()
@@ -350,8 +343,8 @@ impl WithMigrationsVec {
             .update_one(
                 bson::doc! {"_id": res.inserted_id},
                 bson::doc! {"$set": serialized_to_document_migration_record},
-                u_o,
             )
+            .upsert(true)
             .await
             .map_err(
                 |error| MigrationExecution::FinishedButNotSavedDueMongoError {

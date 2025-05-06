@@ -61,7 +61,7 @@ impl Migration for M0 {
         env.db
             .expect("db is available")
             .collection("users")
-            .insert_one(bson::doc! { "x": 0 }, None)
+            .insert_one(bson::doc! { "x": 0 })
             .await?;
 
         Ok(())
@@ -85,7 +85,7 @@ impl Migration for M1 {
         env.db
             .expect("db is available")
             .collection::<Users>("users")
-            .update_one(bson::doc! {"x": 0}, bson::doc! {"$set": {"x": 1} }, None)
+            .update_one(bson::doc! {"x": 0}, bson::doc! {"$set": {"x": 1} })
             .await?;
 
         Ok(())
@@ -104,7 +104,7 @@ impl Migration for M2 {
         env.db
             .expect("db is available")
             .collection::<Users>("users")
-            .update_one(bson::doc! {"x": 1}, bson::doc! {"$set": {"x": 2} }, None)
+            .update_one(bson::doc! {"x": 1}, bson::doc! {"$set": {"x": 2} })
             .await?;
 
         Ok(())

@@ -24,7 +24,7 @@ pub async fn shell(t: &TestDb) {
     assert!(t
         .db
         .collection::<Users>("users")
-        .find_one(bson::doc! {"name": "Superman"}, None)
+        .find_one(bson::doc! {"name": "Superman"})
         .await
         .unwrap()
         .is_some());

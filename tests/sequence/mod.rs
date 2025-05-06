@@ -1,7 +1,6 @@
 //! This tests crate contains tests that check migrations execution order
 use bson::{self, Bson};
 use futures::stream::StreamExt;
-use mongodb::options::FindOptions;
 use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
 };
@@ -22,12 +21,10 @@ pub async fn migrations_executed_in_specified_order(t: &TestDb) {
         .await
         .unwrap();
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -53,7 +50,7 @@ pub async fn all_migrations_have_success_status(t: &TestDb) {
 
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -79,7 +76,7 @@ pub async fn migrations_not_just_saved_as_executed_but_really_affected_target(t:
     assert!(t
         .db
         .collection::<Users>("users")
-        .find_one(bson::doc! {"x": 2}, None)
+        .find_one(bson::doc! {"x": 2})
         .await
         .unwrap()
         .is_some());
@@ -100,12 +97,10 @@ pub async fn down_migrations_executed_in_specified_order(t: &TestDb) {
         .await
         .unwrap();
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()

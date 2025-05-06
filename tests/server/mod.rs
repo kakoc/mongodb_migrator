@@ -3,7 +3,7 @@ use super::utils::{M0, M1, M2};
 use bson::Bson;
 use futures::stream::StreamExt;
 use hyper::{Body, Client, Request, StatusCode};
-use mongodb::{options::FindOptions, Database};
+use mongodb::Database;
 use mongodb_migrator::{
     migration::Migration,
     migration_record::MigrationRecord,
@@ -39,7 +39,7 @@ pub async fn server_runs_migrations_by_id() {
 
         check_ups(&db).await;
 
-        db.drop(None).await.expect("test db deleted");
+        db.drop().await.expect("test db deleted");
 
         check_downs(&db).await;
     })
@@ -96,12 +96,10 @@ async fn check_ups(db: &Database) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records = db
         .collection("migrations")
-        .find(bson::doc! {}, f_o)
+        .find(bson::doc! {})
+        .sort(bson::doc! {"end_date": 1})
         .await
         .unwrap()
         .collect::<Vec<_>>()
@@ -162,12 +160,10 @@ async fn check_downs(db: &Database) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records = db
         .collection("migrations")
-        .find(bson::doc! {}, f_o)
+        .find(bson::doc! {})
+        .sort(bson::doc! {"end_date": 1})
         .await
         .unwrap()
         .collect::<Vec<_>>()

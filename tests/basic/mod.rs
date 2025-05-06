@@ -26,7 +26,7 @@ pub async fn basic(node: &ContainerAsync<Mongo>) {
 
     assert!(db
         .collection::<Users>("users")
-        .find_one(bson::doc! {"name": "Superman"}, None)
+        .find_one(bson::doc! {"name": "Superman"})
         .await
         .unwrap()
         .is_some());
@@ -41,7 +41,7 @@ impl Migration for M0 {
         env.db
             .expect("db is available")
             .collection("users")
-            .insert_one(bson::doc! { "name": "Batman" }, None)
+            .insert_one(bson::doc! { "name": "Batman" })
             .await?;
 
         Ok(())
@@ -57,7 +57,6 @@ impl Migration for M1 {
             .update_one(
                 bson::doc! { "name": "Batman" },
                 bson::doc! { "$set": { "name": "Superman" } },
-                None,
             )
             .await?;
 
@@ -95,7 +94,7 @@ pub async fn custom_collection_name(node: &ContainerAsync<Mongo>) {
 
     let ms = db
         .collection("foo")
-        .find(bson::doc! {}, None)
+        .find(bson::doc! {})
         .await
         .unwrap()
         .collect::<Vec<_>>()

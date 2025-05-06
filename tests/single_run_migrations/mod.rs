@@ -29,12 +29,10 @@ pub async fn migrations_executed_in_single_manner(t: &TestDb) {
         .await
         .unwrap();
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -76,7 +74,8 @@ pub async fn down_migrations_executed_in_single_manner(t: &TestDb) {
 
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()

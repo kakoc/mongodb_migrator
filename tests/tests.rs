@@ -18,7 +18,7 @@ async fn run_all_tests() {
     macro_rules! run_test {
         ($b:stmt) => {
             $b
-            t.db.drop(None).await.expect("test db deleted");
+            t.db.drop().await.expect("test db deleted");
         };
     }
 
