@@ -14,12 +14,11 @@ mod version_numbers;
 
 #[tokio::test]
 async fn run_all_tests() {
-    let docker = testcontainers::clients::Cli::default();
-    let t = TestDb::new(&docker).await;
+    let t = TestDb::new().await;
     macro_rules! run_test {
         ($b:stmt) => {
             $b
-            t.db.drop(None).await.expect("test db deleted");
+            t.db.drop().await.expect("test db deleted");
         };
     }
 

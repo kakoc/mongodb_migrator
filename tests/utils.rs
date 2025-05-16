@@ -6,17 +6,20 @@ use mongodb_migrator::{
     migrator::{shell::ShellConfig, Env},
 };
 use serde_derive::{Deserialize, Serialize};
-use testcontainers::{images::mongo::Mongo, Container};
+use testcontainers_modules::{
+    mongo::Mongo,
+    testcontainers::{runners::AsyncRunner, ContainerAsync},
+};
 
-pub struct TestDb<'a> {
-    pub node: Container<'a, Mongo>,
+pub struct TestDb {
+    pub node: ContainerAsync<Mongo>,
     pub db: Database,
 }
 
-impl<'a> TestDb<'a> {
-    pub async fn new(docker: &'a testcontainers::clients::Cli) -> TestDb<'a> {
-        let node = docker.run(testcontainers::images::mongo::Mongo::default());
-        let host_port = node.get_host_port_ipv4(27017);
+impl TestDb {
+    pub async fn new() -> TestDb {
+        let node = Mongo::default().start().await.unwrap();
+        let host_port = node.get_host_port_ipv4(27017).await.unwrap();
         let url = format!("mongodb://localhost:{}/", host_port);
         let client = mongodb::Client::with_uri_str(url).await.unwrap();
         let db = client.database("test");
@@ -58,7 +61,7 @@ impl Migration for M0 {
         env.db
             .expect("db is available")
             .collection("users")
-            .insert_one(bson::doc! { "x": 0 }, None)
+            .insert_one(bson::doc! { "x": 0 })
             .await?;
 
         Ok(())
@@ -82,7 +85,7 @@ impl Migration for M1 {
         env.db
             .expect("db is available")
             .collection::<Users>("users")
-            .update_one(bson::doc! {"x": 0}, bson::doc! {"$set": {"x": 1} }, None)
+            .update_one(bson::doc! {"x": 0}, bson::doc! {"$set": {"x": 1} })
             .await?;
 
         Ok(())
@@ -101,7 +104,7 @@ impl Migration for M2 {
         env.db
             .expect("db is available")
             .collection::<Users>("users")
-            .update_one(bson::doc! {"x": 1}, bson::doc! {"$set": {"x": 2} }, None)
+            .update_one(bson::doc! {"x": 1}, bson::doc! {"$set": {"x": 2} })
             .await?;
 
         Ok(())

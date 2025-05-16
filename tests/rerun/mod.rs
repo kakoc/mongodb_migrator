@@ -8,13 +8,13 @@ use mongodb_migrator::{
 
 use super::utils::{init_migrator_with_migrations, TestDb, M0, M1, M2, M3};
 
-pub async fn picks_only_failed<'a>(t: &TestDb<'a>) {
+pub async fn picks_only_failed(t: &TestDb) {
     let migration_record = MigrationRecord::migration_succeeded(MigrationRecord::migration_start(
         M0 {}.get_id().to_string(),
     ));
 
     t.db.collection("migrations")
-        .insert_one(bson::to_document(&migration_record).unwrap(), None)
+        .insert_one(bson::to_document(&migration_record).unwrap())
         .await
         .unwrap();
 
@@ -31,7 +31,7 @@ pub async fn picks_only_failed<'a>(t: &TestDb<'a>) {
 
     let saved_migration_before =
         t.db.collection("migrations")
-            .find_one(bson::doc! {"_id": M0{}.get_id()}, None)
+            .find_one(bson::doc! {"_id": M0{}.get_id()})
             .await
             .unwrap()
             .unwrap();
@@ -42,7 +42,7 @@ pub async fn picks_only_failed<'a>(t: &TestDb<'a>) {
 
     assert_eq!(
         t.db.collection("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -59,7 +59,7 @@ pub async fn picks_only_failed<'a>(t: &TestDb<'a>) {
 
     assert_eq!(
         t.db.collection::<MigrationRecord>("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()

@@ -13,24 +13,26 @@ keywords = ["mongodb"]
 [dependencies]
 async-trait = "0.1.68"
 chrono = { version = "0.4.26", features = ["serde"] }
-mongodb = "2.5.0"
-bson = "2.6.1"
+mongodb = "3.2.3"
+bson = "2.14.0"
 anyhow = "1.0.71"
 serde = "1.0.163"
 serde_derive = "1.0.163"
 serde_json = "1.0.96"
 log = "0.4.18"
-thiserror = "1.0.40"
+thiserror = "2.0.12"
 futures = "0.3.28"
 
 # TODO(kakoc): place under features?
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-axum = "0.6.18"
+axum = "0.8.4"
 tokio = { version = "1.28.2", features = ["full"] }
 
 [dev-dependencies]
-testcontainers = "0.14.0"
+testcontainers = "0.24.0"
+testcontainers-modules = { version = "0.12.0", features = ["mongo"] }
 rusty-hook = "0.11.2"
 version-sync = "0.9.4"
-hyper = { version = "0.14.26", features = ["client"] }
+hyper = { version = "1.1.0", features = ["client"] }
+hyper-util = { version = "0.1.3", features = ["client"] }

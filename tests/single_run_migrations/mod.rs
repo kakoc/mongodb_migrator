@@ -6,7 +6,7 @@ use mongodb::options::FindOptions;
 use mongodb_migrator::{migration::Migration, migration_record::MigrationRecord};
 
 // M0 -> M1 -> M2
-pub async fn migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
+pub async fn migrations_executed_in_single_manner(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -29,12 +29,10 @@ pub async fn migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
         .await
         .unwrap();
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -48,7 +46,7 @@ pub async fn migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
 }
 
 // M0 -> M1 -> M2
-pub async fn down_migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
+pub async fn down_migrations_executed_in_single_manner(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -76,7 +74,8 @@ pub async fn down_migrations_executed_in_single_manner<'a>(t: &TestDb<'a>) {
 
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()

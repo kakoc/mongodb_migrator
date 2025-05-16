@@ -1,7 +1,6 @@
 //! This tests crate contains tests that check migrations execution order
 use bson::{self, Bson};
 use futures::stream::StreamExt;
-use mongodb::options::FindOptions;
 use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
 };
@@ -9,7 +8,7 @@ use mongodb_migrator::{
 use super::utils::{init_migrator_with_migrations, TestDb, Users, M0, M1, M2};
 
 // M0 -> M1 -> M2
-pub async fn migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
+pub async fn migrations_executed_in_specified_order(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -22,12 +21,10 @@ pub async fn migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
         .await
         .unwrap();
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -41,7 +38,7 @@ pub async fn migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
 }
 
 /// M0(Success) , M1(Success) , M2(Success)
-pub async fn all_migrations_have_success_status<'a>(t: &TestDb<'a>) {
+pub async fn all_migrations_have_success_status(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_len = migrations.len();
@@ -53,7 +50,7 @@ pub async fn all_migrations_have_success_status<'a>(t: &TestDb<'a>) {
 
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, None)
+            .find(bson::doc! {})
             .await
             .unwrap()
             .collect::<Vec<_>>()
@@ -67,7 +64,7 @@ pub async fn all_migrations_have_success_status<'a>(t: &TestDb<'a>) {
     assert!(all_records.iter().all(|v| *v == MigrationStatus::Success));
 }
 
-pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a>(t: &TestDb<'a>) {
+pub async fn migrations_not_just_saved_as_executed_but_really_affected_target(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
 
@@ -79,7 +76,7 @@ pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a
     assert!(t
         .db
         .collection::<Users>("users")
-        .find_one(bson::doc! {"x": 2}, None)
+        .find_one(bson::doc! {"x": 2})
         .await
         .unwrap()
         .is_some());
@@ -87,7 +84,7 @@ pub async fn migrations_not_just_saved_as_executed_but_really_affected_target<'a
 
 // M2 -> M1 -> M0
 // TODO(kakoc) : move all down to a separate folder?
-pub async fn down_migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
+pub async fn down_migrations_executed_in_specified_order(t: &TestDb) {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
     let migrations_ids = migrations
@@ -100,12 +97,10 @@ pub async fn down_migrations_executed_in_specified_order<'a>(t: &TestDb<'a>) {
         .await
         .unwrap();
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records =
         t.db.collection("migrations")
-            .find(bson::doc! {}, f_o)
+            .find(bson::doc! {})
+            .sort(bson::doc! {"end_date": 1})
             .await
             .unwrap()
             .collect::<Vec<_>>()

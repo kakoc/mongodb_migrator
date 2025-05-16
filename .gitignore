@@ -1,2 +1,5 @@
 /target
 draft
+# ignore IDE project files
+/.vscode
+/.idea

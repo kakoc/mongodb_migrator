@@ -6,7 +6,7 @@ use axum::{
     routing::post,
     Router,
 };
-use tokio::sync::Mutex;
+use tokio::{net::TcpListener, sync::Mutex};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{
@@ -67,11 +67,11 @@ pub async fn server(params: ServiceParams) {
 }
 
 fn ups() -> Router<SharedState> {
-    Router::new().route("/:id", post(up_migration_with_id))
+    Router::new().route("/{id}", post(up_migration_with_id))
 }
 
 fn downs() -> Router<SharedState> {
-    Router::new().route("/:id", post(down_migration_with_id))
+    Router::new().route("/{id}", post(down_migration_with_id))
 }
 
 async fn up_migration_with_id(
@@ -133,8 +133,8 @@ async fn run_server(router: Router, port: u16) {
 
     tracing::debug!("listening on {}", addr);
 
-    axum::Server::bind(&addr)
-        .serve(router.into_make_service())
+    let listener = TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, router.into_make_service())
         .await
         .unwrap();
 }

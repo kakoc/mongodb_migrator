@@ -1,22 +1,24 @@
 //! These tests check how single migration via http server run works
 use super::utils::{M0, M1, M2};
+use axum::body::Body;
 use bson::Bson;
 use futures::stream::StreamExt;
-use hyper::{Body, Client, Request, StatusCode};
-use mongodb::{options::FindOptions, Database};
+use hyper::{Request, StatusCode};
+use hyper_util::{client::legacy::Client, rt::TokioExecutor};
+use mongodb::Database;
 use mongodb_migrator::{
     migration::Migration,
     migration_record::MigrationRecord,
     server::{self, DbParams, MigratorParams, ServiceParams},
 };
+use testcontainers_modules::{mongo::Mongo, testcontainers::runners::AsyncRunner};
 
 #[tokio::test]
 pub async fn server_runs_migrations_by_id() {
     let migrations: Vec<Box<dyn Migration>> =
         vec![Box::new(M0 {}), Box::new(M1 {}), Box::new(M2 {})];
-    let docker = testcontainers::clients::Cli::default();
-    let node = docker.run(testcontainers::images::mongo::Mongo::default());
-    let host_port = node.get_host_port_ipv4(27017);
+    let node = Mongo::default().start().await.unwrap();
+    let host_port = node.get_host_port_ipv4(27017).await.unwrap();
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();
     let db = client.database("test");
@@ -39,7 +41,7 @@ pub async fn server_runs_migrations_by_id() {
 
         check_ups(&db).await;
 
-        db.drop(None).await.expect("test db deleted");
+        db.drop().await.expect("test db deleted");
 
         check_downs(&db).await;
     })
@@ -56,7 +58,8 @@ async fn check_ups(db: &Database) {
         .map(|m| m.get_id().to_string())
         .collect::<Vec<String>>();
 
-    let client = Client::new();
+    let client = Client::builder(TokioExecutor::new()).build_http();
+
     let response = client
         .request(
             Request::builder()
@@ -96,12 +99,10 @@ async fn check_ups(db: &Database) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records = db
         .collection("migrations")
-        .find(bson::doc! {}, f_o)
+        .find(bson::doc! {})
+        .sort(bson::doc! {"end_date": 1})
         .await
         .unwrap()
         .collect::<Vec<_>>()
@@ -122,7 +123,7 @@ async fn check_downs(db: &Database) {
         .map(|m| m.get_id().to_string())
         .collect::<Vec<String>>();
 
-    let client = Client::new();
+    let client = Client::builder(TokioExecutor::new()).build_http();
     let response = client
         .request(
             Request::builder()
@@ -162,12 +163,10 @@ async fn check_downs(db: &Database) {
 
     assert_eq!(response.status(), StatusCode::OK);
 
-    let mut f_o: FindOptions = Default::default();
-    f_o.sort = Some(bson::doc! {"end_date": 1});
-
     let all_records = db
         .collection("migrations")
-        .find(bson::doc! {}, f_o)
+        .find(bson::doc! {})
+        .sort(bson::doc! {"end_date": 1})
         .await
         .unwrap()
         .collect::<Vec<_>>()

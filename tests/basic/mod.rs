@@ -3,15 +3,15 @@ use async_trait::async_trait;
 use bson::Bson;
 use futures::stream::StreamExt;
 use serde_derive::{Deserialize, Serialize};
-use testcontainers::{images::mongo::Mongo, Container};
+use testcontainers_modules::{mongo::Mongo, testcontainers::ContainerAsync};
 
 use mongodb_migrator::{
     migration::Migration, migration_record::MigrationRecord, migration_status::MigrationStatus,
     migrator::Env,
 };
 
-pub async fn basic<'a>(node: &Container<'a, Mongo>) {
-    let host_port = node.get_host_port_ipv4(27017);
+pub async fn basic(node: &ContainerAsync<Mongo>) {
+    let host_port = node.get_host_port_ipv4(27017).await.unwrap();
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();
     let db = client.database("test");
@@ -26,7 +26,7 @@ pub async fn basic<'a>(node: &Container<'a, Mongo>) {
 
     assert!(db
         .collection::<Users>("users")
-        .find_one(bson::doc! {"name": "Superman"}, None)
+        .find_one(bson::doc! {"name": "Superman"})
         .await
         .unwrap()
         .is_some());
@@ -41,7 +41,7 @@ impl Migration for M0 {
         env.db
             .expect("db is available")
             .collection("users")
-            .insert_one(bson::doc! { "name": "Batman" }, None)
+            .insert_one(bson::doc! { "name": "Batman" })
             .await?;
 
         Ok(())
@@ -57,7 +57,6 @@ impl Migration for M1 {
             .update_one(
                 bson::doc! { "name": "Batman" },
                 bson::doc! { "$set": { "name": "Superman" } },
-                None,
             )
             .await?;
 
@@ -70,8 +69,8 @@ struct Users {
     name: String,
 }
 
-pub async fn custom_collection_name<'a>(node: &Container<'a, Mongo>) {
-    let host_port = node.get_host_port_ipv4(27017);
+pub async fn custom_collection_name(node: &ContainerAsync<Mongo>) {
+    let host_port = node.get_host_port_ipv4(27017).await.unwrap();
     let url = format!("mongodb://localhost:{}/", host_port);
     let client = mongodb::Client::with_uri_str(url).await.unwrap();
     let db = client.database("test");
@@ -95,7 +94,7 @@ pub async fn custom_collection_name<'a>(node: &Container<'a, Mongo>) {
 
     let ms = db
         .collection("foo")
-        .find(bson::doc! {}, None)
+        .find(bson::doc! {})
         .await
         .unwrap()
         .collect::<Vec<_>>()
